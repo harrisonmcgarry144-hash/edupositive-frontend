@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
-import { Btn, Input, C, Card } from "../components/ui";
+import { Btn, Input, C } from "../components/ui";
 
 export default function Login() {
-  const [email, setEmail]   = useState("");
-  const [pass, setPass]     = useState("");
-  const [error, setError]   = useState("");
+  const [email, setEmail]     = useState("");
+  const [pass, setPass]       = useState("");
+  const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router    = useRouter();
@@ -23,6 +23,8 @@ export default function Login() {
     } finally { setLoading(false); }
   };
 
+  const handleKey = e => { if (e.key === "Enter") handle(); };
+
   return (
     <div style={{
       minHeight: "100vh", display: "flex", flexDirection: "column",
@@ -30,18 +32,19 @@ export default function Login() {
       background: C.bg,
     }}>
       <div style={{ width: "100%", maxWidth: 360 }}>
-        <Link href="/" style={{ display: "inline-block", marginBottom: 32 }}>
-          <div style={{ fontSize: 24, fontWeight: 800, color: C.text }}>✦ EduPositive</div>
-        </Link>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: C.text, marginBottom: 8, fontFamily: "var(--font-serif)" }}>✦ EduPositive</div>
+          <div style={{ fontSize: 13, color: C.accent, fontWeight: 600, letterSpacing: "0.05em" }}>A-LEVEL REVISION TOOL</div>
+        </div>
 
-        <h2 style={{ fontSize: 26, fontWeight: 800, color: C.text, marginBottom: 6, fontFamily: "var(--font-serif)" }}>
+        <h2 style={{ fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 6, fontFamily: "var(--font-serif)" }}>
           Welcome back
         </h2>
-        <p style={{ color: C.textSec, fontSize: 13, marginBottom: 32 }}>Sign in to continue your journey</p>
+        <p style={{ color: C.textSec, fontSize: 13, marginBottom: 28 }}>Sign in to continue your revision</p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <Input placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} type="email" />
-          <Input placeholder="Password" value={pass} onChange={e => setPass(e.target.value)} type="password" />
+          <Input placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} type="email" onKeyDown={handleKey} />
+          <Input placeholder="Password" value={pass} onChange={e => setPass(e.target.value)} type="password" onKeyDown={handleKey} />
 
           {error && (
             <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(239,68,68,0.12)", color: C.red, fontSize: 13 }}>

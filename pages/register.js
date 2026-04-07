@@ -5,10 +5,10 @@ import { useAuth } from "../context/AuthContext";
 import { Btn, Input, C } from "../components/ui";
 
 export default function Register() {
-  const [form, setForm]     = useState({ email:"", password:"", username:"", fullName:"" });
-  const [error, setError]   = useState("");
+  const [form, setForm]       = useState({ email:"", password:"", username:"", fullName:"" });
+  const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const { register, login }   = useAuth();
   const router = useRouter();
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
@@ -17,6 +17,8 @@ export default function Register() {
     setError(""); setLoading(true);
     try {
       await register(form.email, form.password, form.username, form.fullName);
+      // Auto sign in after registration
+      await login(form.email, form.password);
       router.replace("/onboarding");
     } catch (e) {
       setError(e.message);
@@ -29,14 +31,15 @@ export default function Register() {
       alignItems: "center", justifyContent: "center", padding: 24, background: C.bg,
     }}>
       <div style={{ width: "100%", maxWidth: 360 }}>
-        <Link href="/" style={{ display: "inline-block", marginBottom: 32 }}>
-          <div style={{ fontSize: 24, fontWeight: 800, color: C.text }}>✦ EduPositive</div>
-        </Link>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: C.text, marginBottom: 8, fontFamily: "var(--font-serif)" }}>✦ EduPositive</div>
+          <div style={{ fontSize: 13, color: C.accent, fontWeight: 600, letterSpacing: "0.05em" }}>A-LEVEL REVISION TOOL</div>
+        </div>
 
-        <h2 style={{ fontSize: 26, fontWeight: 800, color: C.text, marginBottom: 6, fontFamily: "var(--font-serif)" }}>
+        <h2 style={{ fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 6, fontFamily: "var(--font-serif)" }}>
           Create your account
         </h2>
-        <p style={{ color: C.textSec, fontSize: 13, marginBottom: 32 }}>Free forever. No credit card needed.</p>
+        <p style={{ color: C.textSec, fontSize: 13, marginBottom: 28 }}>Free forever. No credit card needed.</p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <Input placeholder="Full name" value={form.fullName} onChange={set("fullName")} />

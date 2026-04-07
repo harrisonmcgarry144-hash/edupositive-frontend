@@ -8,28 +8,28 @@ const CAREERS = ["Medicine","Law","Engineering","Architecture","Finance","Teachi
 
 export default function Onboarding() {
   const [step, setStep]         = useState(0);
-  const [levelType, setLevel]   = useState("");
   const [subjects, setSubjects] = useState([]);
   const [allSubjects, setAll]   = useState([]);
   const [career, setCareer]     = useState("");
   const [loading, setLoading]   = useState(false);
   const { user, updateUser }    = useAuth();
   const router = useRouter();
-useEffect(() => {
-  if (user?.role === "admin") router.replace("/dashboard");
-}, [user]);
+
   useEffect(() => {
-    contentApi.subjects().then(setAll).catch(() => {});
+    if (user?.role === "admin") router.replace("/dashboard");
+  }, [user]);
+
+  useEffect(() => {
+    contentApi.subjects("a-level").then(setAll).catch(() => {});
   }, []);
 
-  const filteredSubjects = levelType ? allSubjects.filter(s => !s.level_type || s.level_type === levelType) : allSubjects;
   const toggle = id => setSubjects(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
 
   const finish = async () => {
     setLoading(true);
     try {
-      await authApi.onboarding({ levelType, subjectIds: subjects, careerGoal: career });
-      updateUser({ level_type: levelType, career_goal: career });
+      await authApi.onboarding({ levelType: "a-level", subjectIds: subjects, careerGoal: career });
+      updateUser({ level_type: "a-level", career_goal: career });
       router.replace("/dashboard");
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -37,36 +37,18 @@ useEffect(() => {
 
   const steps = [
     {
-      title: "What are you studying?",
-      sub: "Choose your qualification level",
-      canNext: !!levelType,
-      content: (
-        <div style={{ display: "flex", gap: 12 }}>
-          {["gcse", "a-level"].map(l => (
-            <button key={l} onClick={() => setLevel(l)} style={{
-              flex: 1, padding: "20px 16px", borderRadius: 14,
-              border: `2px solid ${levelType === l ? C.accent : C.border}`,
-              background: levelType === l ? "var(--accent-soft)" : C.surface,
-              color: levelType === l ? C.accent : C.text,
-              fontSize: 16, fontWeight: 700, cursor: "pointer", textTransform: "uppercase",
-            }}>{l}</button>
-          ))}
-        </div>
-      ),
-    },
-    {
-      title: "Your subjects",
+      title: "Your A-Level subjects",
       sub: "Select all the subjects you study",
       canNext: subjects.length > 0,
       content: (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {filteredSubjects.map(s => (
+          {allSubjects.map(s => (
             <Pill key={s.id} active={subjects.includes(s.id)} onClick={() => toggle(s.id)}>
               {s.icon} {s.name}
             </Pill>
           ))}
-          {!filteredSubjects.length && (
-            <p style={{ color: C.textSec, fontSize: 14 }}>No subjects found — they'll be added soon!</p>
+          {!allSubjects.length && (
+            <p style={{ color: C.textSec, fontSize: 14 }}>Loading subjects…</p>
           )}
         </div>
       ),
@@ -89,8 +71,11 @@ useEffect(() => {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, padding: 28, display: "flex", flexDirection: "column" }}>
+      {/* Logo */}
+      <div style={{ fontSize: 20, fontWeight: 800, color: C.text, fontFamily: "var(--font-serif)", marginBottom: 32 }}>✦ EduPositive</div>
+
       {/* Progress */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 40 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 32 }}>
         {steps.map((_, i) => (
           <div key={i} style={{
             flex: 1, height: 3, borderRadius: 100,
@@ -104,7 +89,7 @@ useEffect(() => {
       </h2>
       <p style={{ color: C.textSec, fontSize: 14, marginBottom: 28 }}>{s.sub}</p>
 
-      <div style={{ flex: 1 }}>{s.content}</div>
+      <div style={{ flex: 1, overflowY: "auto" }}>{s.content}</div>
 
       <div style={{ marginTop: 32, display: "flex", gap: 12 }}>
         {step > 0 && (
