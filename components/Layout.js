@@ -32,98 +32,110 @@ export default function Layout({ children }) {
   const noNav     = NO_NAV.includes(router.pathname) || !user;
   const activeTab = TABS.find(t => router.pathname.startsWith(t.href))?.id;
 
-  if (noNav) return <div style={{ background: C.bg, minHeight: "100vh" }}>{children}</div>;
+  if (noNav) return (
+    <div style={{ background: C.bg, height: "100vh", overflow: "hidden" }}>
+      <div style={{ height: "100%", overflowY: "auto" }}>{children}</div>
+    </div>
+  );
 
+  // ── Desktop layout ────────────────────────────────────────────────────────
   if (isDesktop) return (
-    <div style={{ display: "flex", minHeight: "100vh", background: C.bg }}>
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: C.bg }}>
+      {/* Sidebar — fixed, no scroll */}
       <div style={{
-        width: 240, flexShrink: 0, position: "fixed", top: 0, left: 0, height: "100vh",
+        width: 220, flexShrink: 0,
+        height: "100vh",
         background: C.surface, borderRight: `1px solid ${C.border}`,
-        display: "flex", flexDirection: "column", padding: "28px 0", zIndex: 100,
+        display: "flex", flexDirection: "column",
+        overflow: "hidden",
       }}>
-        <div style={{ padding: "0 24px 24px" }}>
-          <div style={{ fontSize: 20, fontWeight: 800, color: C.text, fontFamily: "var(--font-serif)" }}>✦ EduPositive</div>
+        {/* Logo + user */}
+        <div style={{ padding: "20px 20px 16px", flexShrink: 0 }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: C.text, fontFamily: "var(--font-serif)", marginBottom: 14 }}>✦ EduPositive</div>
           {user && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg,var(--accent),#a78bfa)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg,var(--accent),#a78bfa)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
                 {(user.username||"?").slice(0,2).toUpperCase()}
               </div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.username}</div>
-                <div style={{ fontSize: 11, color: C.textMuted }}>Level {user.level} · {user.xp?.toLocaleString()} XP</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.username}</div>
+                <div style={{ fontSize: 10, color: C.textMuted }}>L{user.level} · {user.xp?.toLocaleString()} XP</div>
               </div>
             </div>
           )}
         </div>
 
-        <nav style={{ flex: 1, padding: "0 12px", overflowY: "auto" }}>
+        {/* Nav — no scroll, fits all 8 tabs */}
+        <nav style={{ flex: 1, padding: "0 10px", display: "flex", flexDirection: "column", gap: 2, overflow: "hidden" }}>
           {TABS.map(tab => {
             const active = activeTab === tab.id;
             return (
-              <Link key={tab.id} href={tab.href} style={{ textDecoration: "none", display: "block", marginBottom: 2 }}>
+              <Link key={tab.id} href={tab.href} style={{ textDecoration: "none", display: "block" }}>
                 <div style={{
-                  display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", borderRadius: 10,
+                  display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8,
                   background: active ? "var(--accent-soft)" : "transparent",
                   border: `1px solid ${active ? "var(--accent-glow)" : "transparent"}`,
                   cursor: "pointer", transition: "all 0.15s",
                 }}>
-                  <span style={{ fontSize: 18, width: 22, textAlign: "center" }}>{tab.icon}</span>
-                  <span style={{ fontSize: 14, fontWeight: active ? 700 : 500, color: active ? C.accent : C.textSec }}>{tab.label}</span>
+                  <span style={{ fontSize: 16, width: 20, textAlign: "center", flexShrink: 0 }}>{tab.icon}</span>
+                  <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, color: active ? C.accent : C.textSec }}>{tab.label}</span>
                 </div>
               </Link>
             );
           })}
         </nav>
 
+        {/* Bottom stats */}
         {user && (
-          <div style={{ padding: "16px 24px", borderTop: `1px solid ${C.border}`, display: "flex", gap: 20 }}>
+          <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.border}`, display: "flex", gap: 16, flexShrink: 0, alignItems: "center" }}>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: "var(--amber)" }}>{user.streak||0}🔥</div>
-              <div style={{ fontSize: 10, color: C.textMuted }}>Streak</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "var(--amber)" }}>{user.streak||0}🔥</div>
+              <div style={{ fontSize: 9, color: C.textMuted }}>Streak</div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: C.accent }}>L{user.level||1}</div>
-              <div style={{ fontSize: 10, color: C.textMuted }}>Level</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: C.accent }}>L{user.level||1}</div>
+              <div style={{ fontSize: 9, color: C.textMuted }}>Level</div>
             </div>
             {user.role === "admin" && (
-              <div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
-                <span style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: "var(--accent-soft)", color: C.accent, fontWeight: 700 }}>Admin</span>
+              <div style={{ marginLeft: "auto" }}>
+                <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 5, background: "var(--accent-soft)", color: C.accent, fontWeight: 700 }}>Admin</span>
               </div>
             )}
           </div>
         )}
       </div>
 
-      <div style={{ marginLeft: 240, flex: 1 }}>
-        <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 32px" }}>
+      {/* Main content — scrollable */}
+      <div style={{ flex: 1, height: "100vh", overflowY: "auto" }}>
+        <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 28px" }}>
           {children}
         </div>
       </div>
     </div>
   );
 
-  // Mobile bottom nav
+  // ── Mobile layout ─────────────────────────────────────────────────────────
   return (
-    <div style={{ background: C.bg, minHeight: "100vh", maxWidth: 480, margin: "0 auto" }}>
-      <main style={{ paddingBottom: 80 }}>{children}</main>
+    <div style={{ background: C.bg, height: "100vh", overflow: "hidden", maxWidth: 480, margin: "0 auto", position: "relative" }}>
+      <main style={{ height: "100vh", overflowY: "auto", paddingBottom: 80 }}>{children}</main>
       <nav style={{
         position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
         width: "100%", maxWidth: 480,
-        background: "rgba(18,18,26,0.95)", backdropFilter: "blur(20px)",
-        borderTop: `1px solid ${C.border}`, display: "flex", padding: "8px 0 20px", zIndex: 100,
+        background: "rgba(18,18,26,0.97)", backdropFilter: "blur(20px)",
+        borderTop: `1px solid ${C.border}`, display: "flex", padding: "6px 0 18px", zIndex: 100,
       }}>
         {TABS.slice(0, 6).map(tab => {
           const active = activeTab === tab.id;
           return (
-            <Link key={tab.id} href={tab.href} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, textDecoration: "none", padding: "4px 0" }}>
+            <Link key={tab.id} href={tab.href} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, textDecoration: "none", padding: "3px 0" }}>
               <div style={{
-                width: active ? 36 : 28, height: active ? 36 : 28, borderRadius: active ? 10 : 8,
+                width: active ? 34 : 26, height: active ? 34 : 26, borderRadius: active ? 9 : 7,
                 background: active ? "var(--accent-soft)" : "transparent",
                 border: `1px solid ${active ? C.accent : "transparent"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: active ? 17 : 15, transition: "all 0.2s",
+                fontSize: active ? 16 : 14, transition: "all 0.2s",
               }}>{tab.icon}</div>
-              <span style={{ fontSize: 10, fontWeight: active ? 700 : 400, color: active ? C.accent : C.textMuted }}>{tab.label.split(" ")[0]}</span>
+              <span style={{ fontSize: 9, fontWeight: active ? 700 : 400, color: active ? C.accent : C.textMuted }}>{tab.label.split(" ")[0]}</span>
             </Link>
           );
         })}
