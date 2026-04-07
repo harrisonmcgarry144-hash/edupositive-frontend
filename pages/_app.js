@@ -1,3 +1,4 @@
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import "../styles/globals.css";
 import { AuthProvider } from "../context/AuthContext";
@@ -10,6 +11,7 @@ return (
       <Component {...pageProps} />
     </Layout>
     <Analytics />
+    <SpeedInsights />
   </AuthProvider>
 );
 }
