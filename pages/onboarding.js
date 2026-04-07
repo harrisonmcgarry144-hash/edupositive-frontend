@@ -15,7 +15,9 @@ export default function Onboarding() {
   const [loading, setLoading]   = useState(false);
   const { user, updateUser }    = useAuth();
   const router = useRouter();
-
+useEffect(() => {
+  if (user?.role === "admin") router.replace("/dashboard");
+}, [user]);
   useEffect(() => {
     contentApi.subjects().then(setAll).catch(() => {});
   }, []);
