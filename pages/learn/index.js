@@ -14,7 +14,7 @@ export default function Learn() {
 
   useEffect(() => {
     Promise.all([
-      contentApi.subjects(user?.level_type),
+      contentApi.mySubjects().catch(() => contentApi.subjects(user?.level_type)),
       user ? analyticsApi.memory().catch(()=>[]) : Promise.resolve([]),
     ]).then(([s, m]) => {
       setSubjects(s || []);
