@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { contentApi, analyticsApi } from "../../lib/api";
-import { Card, ProgressBar, Tag, C, Spinner } from "../../components/ui";
+import { C, Spinner } from "../../components/ui";
 import Link from "next/link";
 
 export default function Learn() {
