@@ -5,15 +5,20 @@ import { C } from "./ui";
 import { useEffect, useState } from "react";
 
 const TABS = [
-  { id: "dashboard", href: "/dashboard",  icon: "⌂",  label: "Home" },
-  { id: "learn",     href: "/learn",       icon: "📚", label: "Learn" },
-  { id: "flashcards",href: "/flashcards",  icon: "🗂",  label: "Cards" },
-  { id: "ai",        href: "/ai",          icon: "✦",  label: "AI Tutor" },
-  { id: "exams",     href: "/exams",       icon: "📝", label: "Exams" },
-  { id: "social",    href: "/social",      icon: "👥", label: "Social" },
-  { id: "analytics", href: "/analytics",   icon: "📊", label: "Analytics" },
-  { id: "settings",  href: "/settings",    icon: "⚙",  label: "Settings" },
+  { id: "dashboard",        href: "/dashboard",        icon: "⌂",  label: "Home" },
+  { id: "learn",            href: "/learn",            icon: "📚", label: "Learn" },
+  { id: "flashcards",       href: "/flashcards",       icon: "🗂",  label: "Cards" },
+  { id: "ai",               href: "/ai",               icon: "✦",  label: "AI Tutor" },
+  { id: "exams",            href: "/exams",            icon: "📝", label: "Exams" },
+  { id: "super-curricular", href: "/super-curricular", icon: "🌟", label: "Super Curr." },
+  { id: "social",           href: "/social",           icon: "👥", label: "Social" },
+  { id: "analytics",        href: "/analytics",        icon: "📊", label: "Analytics" },
+  { id: "tutoring",         href: "/tutoring",         icon: "🎓", label: "Tutoring" },
+  { id: "settings",         href: "/settings",         icon: "⚙",  label: "Settings" },
 ];
+
+// Bottom nav shows 6 most important tabs on mobile
+const MOBILE_TABS = ["dashboard","learn","flashcards","exams","ai","social"];
 
 const NO_NAV = ["/", "/login", "/register", "/onboarding", "/forgot-password"];
 
@@ -38,18 +43,14 @@ export default function Layout({ children }) {
     </div>
   );
 
-  // ── Desktop layout ────────────────────────────────────────────────────────
+  // ── Desktop ────────────────────────────────────────────────────────────────
   if (isDesktop) return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: C.bg }}>
-      {/* Sidebar — fixed, no scroll */}
       <div style={{
-        width: 220, flexShrink: 0,
-        height: "100vh",
+        width: 220, flexShrink: 0, height: "100vh",
         background: C.surface, borderRight: `1px solid ${C.border}`,
-        display: "flex", flexDirection: "column",
-        overflow: "hidden",
+        display: "flex", flexDirection: "column", overflow: "hidden",
       }}>
-        {/* Logo + user */}
         <div style={{ padding: "20px 20px 16px", flexShrink: 0 }}>
           <div style={{ fontSize: 18, fontWeight: 800, color: C.text, fontFamily: "var(--font-serif)", marginBottom: 14 }}>✦ EduPositive</div>
           {user && (
@@ -65,19 +66,18 @@ export default function Layout({ children }) {
           )}
         </div>
 
-        {/* Nav — no scroll, fits all 8 tabs */}
-        <nav style={{ flex: 1, padding: "0 10px", display: "flex", flexDirection: "column", gap: 2, overflow: "hidden" }}>
+        <nav style={{ flex: 1, padding: "0 10px", display: "flex", flexDirection: "column", gap: 1, overflowY: "auto" }}>
           {TABS.map(tab => {
             const active = activeTab === tab.id;
             return (
               <Link key={tab.id} href={tab.href} style={{ textDecoration: "none", display: "block" }}>
                 <div style={{
-                  display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8,
+                  display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8,
                   background: active ? "var(--accent-soft)" : "transparent",
                   border: `1px solid ${active ? "var(--accent-glow)" : "transparent"}`,
-                  cursor: "pointer", transition: "all 0.15s",
+                  cursor: "pointer",
                 }}>
-                  <span style={{ fontSize: 16, width: 20, textAlign: "center", flexShrink: 0 }}>{tab.icon}</span>
+                  <span style={{ fontSize: 15, width: 20, textAlign: "center", flexShrink: 0 }}>{tab.icon}</span>
                   <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, color: active ? C.accent : C.textSec }}>{tab.label}</span>
                 </div>
               </Link>
@@ -85,7 +85,6 @@ export default function Layout({ children }) {
           })}
         </nav>
 
-        {/* Bottom stats */}
         {user && (
           <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.border}`, display: "flex", gap: 16, flexShrink: 0, alignItems: "center" }}>
             <div style={{ textAlign: "center" }}>
@@ -105,7 +104,6 @@ export default function Layout({ children }) {
         )}
       </div>
 
-      {/* Main content — scrollable */}
       <div style={{ flex: 1, height: "100vh", overflowY: "auto" }}>
         <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 28px" }}>
           {children}
@@ -114,7 +112,7 @@ export default function Layout({ children }) {
     </div>
   );
 
-  // ── Mobile layout ─────────────────────────────────────────────────────────
+  // ── Mobile ─────────────────────────────────────────────────────────────────
   return (
     <div style={{ background: C.bg, height: "100vh", overflow: "hidden", maxWidth: 480, margin: "0 auto", position: "relative" }}>
       <main style={{ height: "100vh", overflowY: "auto", paddingBottom: 80 }}>{children}</main>
@@ -124,7 +122,7 @@ export default function Layout({ children }) {
         background: "rgba(18,18,26,0.97)", backdropFilter: "blur(20px)",
         borderTop: `1px solid ${C.border}`, display: "flex", padding: "6px 0 18px", zIndex: 100,
       }}>
-        {TABS.slice(0, 6).map(tab => {
+        {TABS.filter(t => MOBILE_TABS.includes(t.id)).map(tab => {
           const active = activeTab === tab.id;
           return (
             <Link key={tab.id} href={tab.href} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, textDecoration: "none", padding: "3px 0" }}>
