@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { socialApi } from "../../lib/api";
-import { Card, Btn, Input, C, Spinner, Avatar, Empty, Modal } from "../../components/ui";
+import { socialApi, analyticsApi } from "../../lib/api";
+import { Card, Btn, Input, C, Spinner, Avatar, Empty } from "../../components/ui";
 import Link from "next/link";
 
 export default function Social() {
@@ -11,8 +11,10 @@ export default function Social() {
   const [pending, setPending] = useState([]);
   const [search, setSearch]   = useState("");
   const [results, setResults] = useState([]);
+  const [searched, setSearched] = useState(false);
   const [searching, setSrch]  = useState(false);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
@@ -25,11 +27,15 @@ export default function Social() {
 
   const doSearch = async () => {
     if (!search.trim()) return;
-    setSrch(true);
-    const res = await socialApi.search(search).catch(()=>[]);
+    setSrch(true); setNotFound(false); setSearched(true);
+    // Exact username match only
+    const res = await socialApi.search(search.trim(), "", true).catch(()=>[]);
     setResults(res||[]);
+    if (!res || res.length === 0) setNotFound(true);
     setSrch(false);
   };
+
+  const handleKey = e => { if (e.key === "Enter") doSearch(); };
 
   const sendReq = async (receiverId) => {
     await socialApi.sendRequest({ receiverId });
@@ -57,11 +63,10 @@ export default function Social() {
   return (
     <div style={{ padding:"20px 16px 100px" }}>
       <h1 style={{ fontSize:24, fontWeight:800, color:C.text, marginBottom:4, fontFamily:"var(--font-serif)" }}>Social</h1>
-      <p style={{ fontSize:13, color:C.textSec, marginBottom:20 }}>Find friends, study groups, and chat</p>
+      <p style={{ fontSize:13, color:C.textSec, marginBottom:20 }}>Find friends and study together</p>
 
-      {/* Tabs */}
       <div style={{ display:"flex", gap:8, marginBottom:24, overflowX:"auto" }}>
-        {[["friends","👥 Friends"],["search","🔍 Find People"],["messages","💬 Messages"],["groups","📚 Groups"]].map(([id,label]) => (
+        {[["friends","👥 Friends"],["search","🔍 Find People"],["messages","💬 Messages"]].map(([id,label]) => (
           <button key={id} onClick={() => setTab(id)} style={{
             padding:"8px 16px", borderRadius:100, fontSize:13, fontWeight:600,
             cursor:"pointer", whiteSpace:"nowrap",
@@ -83,15 +88,14 @@ export default function Social() {
                   <Avatar user={req} size={36} />
                   <div style={{ flex:1, fontSize:14, fontWeight:600, color:C.text }}>{req.username}</div>
                   <div style={{ display:"flex", gap:8 }}>
-                    <Btn variant="success" onClick={() => respond(req.friendship_id, true)} style={{ padding:"6px 14px", fontSize:12 }}>Accept</Btn>
-                    <Btn variant="danger" onClick={() => respond(req.friendship_id, false)} style={{ padding:"6px 14px", fontSize:12 }}>Decline</Btn>
+                    <Btn onClick={() => respond(req.friendship_id, true)} style={{ padding:"6px 14px", fontSize:12 }}>Accept</Btn>
+                    <Btn variant="ghost" onClick={() => respond(req.friendship_id, false)} style={{ padding:"6px 14px", fontSize:12 }}>Decline</Btn>
                   </div>
                 </div>
               ))}
             </div>
           )}
-
-          {friends.length === 0 && <Empty icon="👥" title="No friends yet" sub="Search for people to connect with" />}
+          {friends.length === 0 && <Empty icon="👥" title="No friends yet" sub='Go to "Find People" and enter someone\'s exact username' />}
           {friends.map(f => (
             <Link key={f.id} href={`/social/messages/${f.id}`}>
               <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 16px", background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, marginBottom:8, cursor:"pointer" }}>
@@ -107,24 +111,36 @@ export default function Social() {
         </>
       )}
 
-      {/* Search */}
+      {/* Exact username search */}
       {tab === "search" && (
         <div>
+          <div style={{ padding:"14px 16px", background:"rgba(245,158,11,0.08)", border:`1px solid rgba(245,158,11,0.2)`, borderRadius:12, marginBottom:16 }}>
+            <div style={{ fontSize:13, color:C.amber, fontWeight:600 }}>🔍 Exact username required</div>
+            <div style={{ fontSize:12, color:C.textSec, marginTop:2 }}>You must type the person's full username exactly to find them.</div>
+          </div>
           <div style={{ display:"flex", gap:10, marginBottom:20 }}>
             <div style={{ flex:1 }}>
-              <Input placeholder="Search by username or name…" value={search} onChange={e => setSearch(e.target.value)} />
+              <Input placeholder="Enter exact username…" value={search} onChange={e => { setSearch(e.target.value); setSearched(false); setNotFound(false); }} onKeyDown={handleKey} />
             </div>
-            <Btn onClick={doSearch} disabled={searching} style={{ padding:"11px 20px" }}>
+            <Btn onClick={doSearch} disabled={searching || !search.trim()} style={{ padding:"11px 20px" }}>
               {searching ? <Spinner size={16} /> : "Search"}
             </Btn>
           </div>
 
-          {results.map(u => (
+          {notFound && searched && (
+            <div style={{ textAlign:"center", padding:"32px 16px", color:C.textMuted }}>
+              <div style={{ fontSize:32, marginBottom:8 }}>🔍</div>
+              <div style={{ fontSize:14 }}>No user found with that username.</div>
+              <div style={{ fontSize:12, marginTop:4 }}>Make sure you typed the full username exactly.</div>
+            </div>
+          )}
+
+          {results.filter(u => u.id !== user.id).map(u => (
             <div key={u.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 16px", background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, marginBottom:8 }}>
               <Avatar user={u} size={40} />
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:14, fontWeight:600, color:C.text }}>{u.username}</div>
-                <div style={{ fontSize:12, color:C.textMuted }}>{u.school || "No school set"}</div>
+                <div style={{ fontSize:12, color:C.textMuted }}>Level {u.level}</div>
               </div>
               <Btn onClick={() => sendReq(u.id)} variant="ghost" style={{ padding:"7px 16px", fontSize:12 }}>Add Friend</Btn>
             </div>
@@ -132,86 +148,40 @@ export default function Social() {
         </div>
       )}
 
-      {tab === "messages" && <MessagesTab />}
-      {tab === "groups" && <GroupsTab />}
+      {/* Messages */}
+      {tab === "messages" && (
+        <MessagesTab friends={friends} />
+      )}
     </div>
   );
 }
 
-function MessagesTab() {
-  const [convos, setConvos] = useState([]);
-  const [loading, setLoad]  = useState(true);
+function MessagesTab({ friends }) {
+  const [conversations, setConvs] = useState([]);
+  const [loading, setLoad]        = useState(true);
+
   useEffect(() => {
-    socialApi.conversations().then(setConvos).catch(()=>{}).finally(()=>setLoad(false));
+    socialApi.conversations().then(setConvs).catch(()=>{}).finally(()=>setLoad(false));
   }, []);
+
   if (loading) return <Spinner />;
-  if (!convos.length) return <Empty icon="💬" title="No messages yet" sub="Start a conversation with a friend" />;
+  if (!conversations.length && !friends.length) return <Empty icon="💬" title="No messages yet" sub="Add friends to start chatting" />;
+
+  const toShow = conversations.length ? conversations : friends;
+
   return (
     <div>
-      {convos.map((c,i) => (
-        <Link key={i} href={`/social/messages/${c.partner_id}`}>
+      {toShow.map(c => (
+        <Link key={c.id} href={`/social/messages/${c.id || c.user_id}`}>
           <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 16px", background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, marginBottom:8, cursor:"pointer" }}>
-            <div style={{ width:40, height:40, borderRadius:10, background:"var(--accent-soft)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, fontWeight:800, color:C.accent }}>
-              {(c.partner_name||"?").slice(0,2).toUpperCase()}
+            <Avatar user={c} size={40} />
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:14, fontWeight:600, color:C.text }}>{c.username}</div>
+              {c.last_message && <div style={{ fontSize:12, color:C.textMuted }}>{c.last_message.slice(0,40)}</div>}
             </div>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:14, fontWeight:600, color:C.text, marginBottom:2 }}>{c.partner_name}</div>
-              <div style={{ fontSize:13, color:C.textMuted, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{c.last_message}</div>
-            </div>
-            {!c.read && <div style={{ width:8, height:8, borderRadius:"50%", background:C.accent, flexShrink:0 }} />}
           </div>
         </Link>
       ))}
-    </div>
-  );
-}
-
-function GroupsTab() {
-  const [groups, setGroups]   = useState([]);
-  const [loading, setLoad]    = useState(true);
-  const [showNew, setShowNew] = useState(false);
-  const [name, setName]       = useState("");
-
-  useEffect(() => {
-    socialApi.groups().then(setGroups).catch(()=>{}).finally(()=>setLoad(false));
-  }, []);
-
-  const create = async () => {
-    if (!name.trim()) return;
-    const g = await socialApi.createGroup({ name });
-    setGroups(p => [g,...p]); setName(""); setShowNew(false);
-  };
-
-  const join = async (id) => {
-    await socialApi.joinGroup(id);
-    setGroups(p => p.map(g => g.id===id ? {...g, is_member:true} : g));
-  };
-
-  if (loading) return <Spinner />;
-  return (
-    <div>
-      <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:16 }}>
-        <Btn onClick={() => setShowNew(true)} style={{ padding:"9px 18px", fontSize:13 }}>+ New Group</Btn>
-      </div>
-      {groups.length === 0 && <Empty icon="📚" title="No groups yet" sub="Create a study group to collaborate" />}
-      {groups.map(g => (
-        <div key={g.id} style={{ padding:"14px 18px", background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, marginBottom:8 }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-            <div>
-              <div style={{ fontSize:14, fontWeight:600, color:C.text, marginBottom:2 }}>{g.name}</div>
-              <div style={{ fontSize:12, color:C.textMuted }}>{g.member_count} members</div>
-            </div>
-            {!g.is_member && <Btn onClick={() => join(g.id)} variant="ghost" style={{ padding:"7px 16px", fontSize:12 }}>Join</Btn>}
-            {g.is_member && <span style={{ fontSize:12, color:C.green, fontWeight:600 }}>✓ Joined</span>}
-          </div>
-        </div>
-      ))}
-      <Modal open={showNew} onClose={() => setShowNew(false)} title="New Study Group">
-        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-          <Input placeholder="Group name" value={name} onChange={e => setName(e.target.value)} />
-          <Btn onClick={create} disabled={!name.trim()} style={{ width:"100%", padding:"12px" }}>Create Group</Btn>
-        </div>
-      </Modal>
     </div>
   );
 }
