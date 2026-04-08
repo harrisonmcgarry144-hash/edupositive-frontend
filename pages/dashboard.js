@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [guidance, setGuidance] = useState(null);
   const [daily, setDaily]       = useState(null);
   const [loading, setLoading]   = useState(true);
+  const [revisingNow, setRevisingNow] = useState(null);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
@@ -21,8 +22,9 @@ export default function Dashboard() {
       usersApi.schedule().catch(() => []),
       aiApi.studyGuidance().catch(() => null),
       flashcardsApi.daily().catch(() => null),
-    ]).then(([d, lb, sched, g, df]) => {
-      setData(d); setLB(lb || []); setSchedule(sched || []); setGuidance(g); setDaily(df);
+      usersApi.revisingNow().catch(() => null),
+    ]).then(([d, lb, sched, g, df, rn]) => {
+      setData(d); setLB(lb || []); setSchedule(sched || []); setGuidance(g); setDaily(df); setRevisingNow(rn?.count || null);
     }).finally(() => setLoading(false));
   }, [user]);
 
@@ -69,6 +71,12 @@ export default function Dashboard() {
           </Link>
         </div>
         <XPBar xp={user.xp} level={user.level} />
+        {revisingNow && (
+          <div style={{ marginTop:12, padding:"8px 14px", borderRadius:100, background:"rgba(34,211,160,0.1)", border:"1px solid rgba(34,211,160,0.2)", display:"inline-flex", alignItems:"center", gap:6 }}>
+            <div style={{ width:7, height:7, borderRadius:"50%", background:C.green, animation:"pulse 2s infinite" }}/>
+            <span style={{ fontSize:12, color:C.green, fontWeight:600 }}>{revisingNow.toLocaleString()} people revising right now</span>
+          </div>
+        )}
       </div>
 
       <div style={{ padding: "0 16px" }}>
