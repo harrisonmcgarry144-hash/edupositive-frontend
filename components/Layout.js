@@ -14,13 +14,14 @@ const TABS = [
   { id: "social",           href: "/social",           icon: "👥", label: "Social" },
   { id: "analytics",        href: "/analytics",        icon: "📊", label: "Analytics" },
   { id: "tutoring",         href: "/tutoring",         icon: "🎓", label: "Tutoring" },
+  { id: "classes",          href: "/classes",          icon: "🏫", label: "Classes" },
   { id: "settings",         href: "/settings",         icon: "⚙",  label: "Settings" },
 ];
 
 // Bottom nav shows 6 most important tabs on mobile
 const MOBILE_TABS = ["dashboard","learn","flashcards","exams","ai","social"];
 
-const NO_NAV = ["/", "/login", "/register", "/onboarding", "/forgot-password", "/verify"];
+const NO_NAV = ["/", "/login", "/register", "/onboarding", "/forgot-password"];
 
 export default function Layout({ children }) {
   const router   = useRouter();
