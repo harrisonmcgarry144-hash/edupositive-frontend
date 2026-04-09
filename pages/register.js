@@ -16,9 +16,12 @@ export default function Register() {
   const handle = async () => {
     setError(""); setLoading(true);
     try {
-      const user = await register(form.email, form.password, form.username, form.fullName);
-      // Auto sign in — token already set in AuthContext, go straight to onboarding
-      router.replace("/onboarding");
+      const data = await register(form.email, form.password, form.username, form.fullName);
+      if (data.requiresVerification) {
+        router.replace("/verify");
+      } else {
+        router.replace("/onboarding");
+      }
     } catch (e) {
       setError(e.message);
     } finally { setLoading(false); }
@@ -26,17 +29,17 @@ export default function Register() {
 
   return (
     <div style={{
-      minHeight: "100vh", display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center", padding: 24, background: C.bg,
+      minHeight:"100vh", display:"flex", flexDirection:"column",
+      alignItems:"center", justifyContent:"center", padding:24, background:C.bg,
     }}>
-      <div style={{ width: "100%", maxWidth: 360 }}>
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div style={{ fontSize: 28, fontWeight: 800, color: C.text, marginBottom: 8, fontFamily: "var(--font-serif)" }}>✦ EduPositive</div>
-          <div style={{ fontSize: 13, color: C.accent, fontWeight: 600, letterSpacing: "0.05em" }}>A-LEVEL REVISION TOOL</div>
+      <div style={{ width:"100%", maxWidth:360 }}>
+        <div style={{ textAlign:"center", marginBottom:40 }}>
+          <div style={{ fontSize:28, fontWeight:800, color:C.text, marginBottom:8, fontFamily:"var(--font-serif)" }}>✦ EduPositive</div>
+          <div style={{ fontSize:13, color:C.accent, fontWeight:600, letterSpacing:"0.05em" }}>A-LEVEL REVISION TOOL</div>
         </div>
-        <h2 style={{ fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 6, fontFamily: "var(--font-serif)" }}>Create your account</h2>
-        <p style={{ color: C.textSec, fontSize: 13, marginBottom: 28 }}>Free forever. No credit card needed.</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <h2 style={{ fontSize:24, fontWeight:800, color:C.text, marginBottom:6, fontFamily:"var(--font-serif)" }}>Create your account</h2>
+        <p style={{ color:C.textSec, fontSize:13, marginBottom:28 }}>Free forever. No credit card needed.</p>
+        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
           <Input placeholder="Full name" value={form.fullName} onChange={set("fullName")} />
           <Input placeholder="Username" value={form.username} onChange={set("username")} />
           <Input placeholder="Email address" value={form.email} onChange={set("email")} type="email" />

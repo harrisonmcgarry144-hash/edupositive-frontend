@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
+import { authApi } from "../lib/api";
 import { Btn, Input, C } from "../components/ui";
 
 export default function Login() {
@@ -9,8 +10,8 @@ export default function Login() {
   const [pass, setPass]         = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
-  const { login } = useAuth();
-  const router    = useRouter();
+  const { login, setUser }      = useAuth();
+  const router                  = useRouter();
 
   const handle = async () => {
     setError(""); setLoading(true);
@@ -19,7 +20,12 @@ export default function Login() {
       if (!user.level_type) router.replace("/onboarding");
       else router.replace("/dashboard");
     } catch (e) {
-      setError(e.message);
+      // If verification required, go to verify page
+      if (e.status === 403 || e.message?.includes("verify")) {
+        router.replace("/verify");
+      } else {
+        setError(e.message);
+      }
     } finally { setLoading(false); }
   };
 

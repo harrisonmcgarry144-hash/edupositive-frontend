@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
     const data = await authApi.register({ email, password, username, fullName });
     localStorage.setItem("ep_token", data.token);
     setUser(data.user);
-    return data.user;
+    return data;
   };
 
   const logout = () => {
