@@ -15,6 +15,7 @@ const TABS = [
   { id: "analytics",        href: "/analytics",        icon: "📊", label: "Analytics" },
   { id: "tutoring",         href: "/tutoring",         icon: "🎓", label: "Tutoring" },
   { id: "classes",          href: "/classes",          icon: "🏫", label: "Classes" },
+  { id: "bawdu",            href: "/bawdu",            icon: "♟", label: "Bawdu Board" },
   { id: "settings",         href: "/settings",         icon: "⚙",  label: "Settings" },
 ];
 
