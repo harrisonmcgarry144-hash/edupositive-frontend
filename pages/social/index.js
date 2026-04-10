@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { socialApi, analyticsApi } from "../../lib/api";
+import { socialApi } from "../../lib/api";
 import { Card, Btn, Input, C, Spinner, Avatar, Empty } from "../../components/ui";
 import Link from "next/link";
 
