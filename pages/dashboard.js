@@ -240,7 +240,16 @@ export default function Dashboard() {
             </Card>
           </div>
         )}
-
+{/* Bawdu Board widget */}
+        <Link href="/bawdu" style={{ textDecoration: "none", display: "block", marginBottom: 16 }}>
+          <div style={{ padding: "16px 20px", borderRadius: 14, background: C.surface, border: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 2 }}>Bawdu Board</div>
+              <div style={{ fontSize: 12, color: C.textSec }}>Play chess vs computer</div>
+            </div>
+            <div style={{ fontSize: 32 }}>♞</div>
+          </div>
+        </Link>
         {/* Admin panel */}
         {user.role === "admin" && (
           <Card glow style={{ marginBottom: 16 }}>
