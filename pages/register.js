@@ -13,15 +13,11 @@ export default function Register() {
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
 
-  const handle = async () => {
+const handle = async () => {
     setError(""); setLoading(true);
     try {
-      const data = await register(form.email, form.password, form.username, form.fullName);
-      if (data.requiresVerification) {
-        router.replace("/verify");
-      } else {
-        router.replace("/onboarding");
-      }
+      await register(form.email, form.password, form.username, form.fullName);
+      router.replace("/verify");
     } catch (e) {
       setError(e.message);
     } finally { setLoading(false); }
