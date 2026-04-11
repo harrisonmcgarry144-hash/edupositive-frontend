@@ -97,7 +97,7 @@ export default function Social() {
               ))}
             </div>
           )}
-          {friends.length === 0 && <Empty icon="👥" title="No friends yet" sub='Go to "Find People" and enter someone\'s exact username' />}
+          {friends.length === 0 && <Empty icon="👥" title="No friends yet" sub="Go to Find People and enter their exact username" />}
           {friends.map(f => (
             <Link key={f.id} href={"/social/messages/" + f.id} style={{ textDecoration: "none", display: "block" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: C.surface, border: "1px solid " + C.border, borderRadius: 12, marginBottom: 8, cursor: "pointer" }}>
