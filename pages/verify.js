@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+fimport { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "../context/AuthContext";
 import { authApi } from "../lib/api";
@@ -14,9 +14,16 @@ export default function Verify() {
   const [resent, setResent]   = useState(false);
   const inputs = [useRef(), useRef(), useRef(), useRef()];
 
-  useEffect(() => {
+useEffect(() => {
     if (user?.is_verified || user?.isVerified) router.replace("/onboarding");
   }, [user]);
+
+  // Block navigation away from verify page
+  useEffect(() => {
+    const handleBeforeUnload = (e) => { e.preventDefault(); };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   const handleChange = (i, val) => {
     if (!/^\d?$/.test(val)) return;
