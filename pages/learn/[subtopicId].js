@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { contentApi } from "../../lib/api";
+import { useStudyLimit, StudyLimitWall, StudyLimitBanner } from "../../components/StudyTimer";
 import { Card, Tag, Btn, C, Spinner } from "../../components/ui";
 import Link from "next/link";
 
@@ -36,6 +37,8 @@ export default function SubtopicPage() {
 
   return (
     <div style={{ padding:"20px 16px 100px" }}>
+      {isLimited && <StudyLimitWall />}
+      <StudyLimitBanner minutesUsed={minutesUsed} isPremium={isPremium} />
       <button onClick={() => router.back()} style={{ background:"none", border:"none", color:C.accent, fontSize:14, cursor:"pointer", marginBottom:20 }}>← Back</button>
       <h1 style={{ fontSize:22, fontWeight:800, color:C.text, marginBottom:4, fontFamily:"var(--font-serif)" }}>Lessons</h1>
       <p style={{ fontSize:13, color:C.textSec, marginBottom:24 }}>{lessons.length} lessons available</p>
@@ -71,6 +74,7 @@ function splitIntoParagraphs(content) {
 }
 
 function LessonView({ lesson, onBack, onComplete }) {
+  const { minutesUsed, isPremium, isLimited } = useStudyLimit();
   const [showAnswer, setShowAnswer]   = useState({});
   const [completed, setCompleted]     = useState(false);
   const [showLeave, setShowLeave]     = useState(false);

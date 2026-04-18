@@ -13,7 +13,6 @@ const TABS = [
   { id: "super-curricular", href: "/super-curricular", icon: "🌟", label: "Super Curr." },
   { id: "social",           href: "/social",           icon: "👥", label: "Social" },
   { id: "analytics",        href: "/analytics",        icon: "📊", label: "Analytics" },
-  { id: "tutoring",         href: "/tutoring",         icon: "🎓", label: "Tutoring" },
   { id: "classes",          href: "/classes",          icon: "🏫", label: "Classes" },
   { id: "premium",          href: "/premium",          icon: "✦", label: "Premium" },
   { id: "settings",          href: "/settings",          icon: "⚙", label: "Settings" },
