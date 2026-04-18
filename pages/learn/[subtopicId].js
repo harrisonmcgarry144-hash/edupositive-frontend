@@ -74,7 +74,10 @@ function splitIntoParagraphs(content) {
 }
 
 function LessonView({ lesson, onBack, onComplete }) {
-  const { minutesUsed, isPremium, isLimited } = useStudyLimit();
+  const studyLimit = useStudyLimit();
+  const minutesUsed = studyLimit?.minutesUsed || 0;
+  const isPremium = studyLimit?.isPremium !== false;
+  const isLimited = studyLimit?.isLimited || false;
   const [showAnswer, setShowAnswer]   = useState({});
   const [completed, setCompleted]     = useState(false);
   const [showLeave, setShowLeave]     = useState(false);
