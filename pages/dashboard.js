@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { analyticsApi, gamificationApi, usersApi, aiApi, flashcardsApi } from "../lib/api";
+import { analyticsApi, gamificationApi, usersApi, aiApi, flashcardsApi, ranksApi } from "../lib/api";
+import { RankBadge } from "../components/RankBadge";
 import { Card, XPBar, Tag, Btn, C, Spinner } from "../components/ui";
 import Link from "next/link";
 
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const [daily, setDaily]       = useState(null);
   const [loading, setLoading]   = useState(true);
   const [revisingNow, setRevisingNow] = useState(null);
+  const [rank, setRank] = useState(null);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
@@ -23,8 +25,9 @@ export default function Dashboard() {
       aiApi.studyGuidance().catch(() => null),
       flashcardsApi.daily().catch(() => null),
       usersApi.revisingNow().catch(() => null),
-    ]).then(([d, lb, sched, g, df, rn]) => {
-      setData(d); setLB(lb || []); setSchedule(sched || []); setGuidance(g); setDaily(df); setRevisingNow(rn?.count || null);
+      ranksApi.me().catch(() => null),
+    ]).then(([d, lb, sched, g, df, rn, rk]) => {
+      setData(d); setLB(lb || []); setSchedule(sched || []); setGuidance(g); setDaily(df); setRevisingNow(rn?.count || null); setRank(rk || null);
     }).finally(() => setLoading(false));
   }, [user]);
 
@@ -59,6 +62,7 @@ export default function Dashboard() {
             </p>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, fontFamily: "var(--font-serif)" }}>
               Hey, {user.username} {user.role === "admin" && <span style={{ color: C.accent, fontSize: 14 }}>✦ Admin</span>}
+            {rank && <div style={{ marginTop: 4 }}><RankBadge rank={rank.rank} isTop100={rank.isTop100} /></div>}
             </h1>
           </div>
           <Link href="/settings">
@@ -240,7 +244,8 @@ export default function Dashboard() {
             </Card>
           </div>
         )}
-{/* Bawdu Board widget */}
+
+        {/* Bawdu Board widget */}
         <Link href="/bawdu" style={{ textDecoration: "none", display: "block", marginBottom: 16 }}>
           <div style={{ padding: "16px 20px", borderRadius: 14, background: C.surface, border: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
             <div>
@@ -250,6 +255,7 @@ export default function Dashboard() {
             <div style={{ fontSize: 32 }}>♞</div>
           </div>
         </Link>
+
         {/* Admin panel */}
         {user.role === "admin" && (
           <Card glow style={{ marginBottom: 16 }}>
