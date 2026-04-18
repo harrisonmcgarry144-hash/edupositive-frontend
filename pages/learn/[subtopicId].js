@@ -37,8 +37,6 @@ export default function SubtopicPage() {
 
   return (
     <div style={{ padding:"20px 16px 100px" }}>
-      {isLimited && <StudyLimitWall />}
-      <StudyLimitBanner minutesUsed={minutesUsed} isPremium={isPremium} />
       <button onClick={() => router.back()} style={{ background:"none", border:"none", color:C.accent, fontSize:14, cursor:"pointer", marginBottom:20 }}>← Back</button>
       <h1 style={{ fontSize:22, fontWeight:800, color:C.text, marginBottom:4, fontFamily:"var(--font-serif)" }}>Lessons</h1>
       <p style={{ fontSize:13, color:C.textSec, marginBottom:24 }}>{lessons.length} lessons available</p>
