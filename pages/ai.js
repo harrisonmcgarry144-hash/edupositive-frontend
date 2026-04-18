@@ -316,7 +316,6 @@ function Section({ title, color, items }) {
   );
 }
 
-import PremiumGate from "../components/PremiumGate";
 export default function AI() {
   return (
     <PremiumGate feature="AI Tutor">
