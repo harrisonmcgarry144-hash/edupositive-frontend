@@ -1,3 +1,5 @@
+import PremiumGate from "../components/PremiumGate";
+import { paymentsApi } from "../lib/api";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { aiApi } from "../lib/api";
@@ -16,8 +18,16 @@ const PERSONALITIES = [
   { id:"socratic",     label:"🤔 Socratic" },
 ];
 
-export default function AI() {
+function AIContent() {
   const { user } = useAuth();
+  const [isPremium, setIsPremium] = useState(null);
+
+  useEffect(() => {
+    paymentsApi.status().then(d => setIsPremium(d.isPremium)).catch(() => setIsPremium(false));
+  }, []);
+
+  if (isPremium === false) return <PremiumGate feature="AI Tutor" icon="✦" />;
+
   const [messages, setMessages] = useState([
     { role:"assistant", content:"Hi! I'm your EduPositive AI tutor. Ask me anything about your subjects, or try Blurt Mode or Feynman Mode below." }
   ]);
@@ -303,5 +313,14 @@ function Section({ title, color, items }) {
         </div>
       ))}
     </div>
+  );
+}
+
+import PremiumGate from "../components/PremiumGate";
+export default function AI() {
+  return (
+    <PremiumGate feature="AI Tutor">
+      <AIContent />
+    </PremiumGate>
   );
 }
