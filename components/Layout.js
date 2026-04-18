@@ -21,7 +21,7 @@ const TABS = [
 // Bottom nav shows 6 most important tabs on mobile
 const MOBILE_TABS = ["dashboard","learn","flashcards","exams","ai","social"];
 
-const NO_NAV = ["/", "/login", "/register", "/onboarding", "/forgot-password", "/verify", "/generating"];
+const NO_NAV = ["/", "/login", "/register", "/onboarding", "/forgot-password"];
 
 export default function Layout({ children }) {
   const router   = useRouter();
