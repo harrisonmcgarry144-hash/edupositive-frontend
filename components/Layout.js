@@ -35,7 +35,9 @@ export default function Layout({ children }) {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const noNav     = NO_NAV.includes(router.pathname) || !user;
+  const isLessonDetail = router.pathname.startsWith('/learn/[subtopicId]') || 
+                        (router.pathname.startsWith('/learn/') && router.pathname !== '/learn' && !router.pathname.startsWith('/learn/topic'));
+  const noNav     = NO_NAV.includes(router.pathname) || isLessonDetail || !user;
   const activeTab = TABS.find(t => router.pathname.startsWith(t.href))?.id;
 
   if (noNav) return (
