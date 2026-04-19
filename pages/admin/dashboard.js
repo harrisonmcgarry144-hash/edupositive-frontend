@@ -27,6 +27,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [regenStatus, setRegenStatus] = useState(null);
+  const [revenue, setRevenue] = useState(null);
   const [userSearch, setUserSearch] = useState("");
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => { if (tab === 'users') loadUsers(); }, [tab]);
+  useEffect(() => { if (tab === 'revenue' && !revenue) adminFetch('/api/admin/revenue').then(setRevenue).catch(() => setRevenue({error: 'Could not load'})); }, [tab]);
 
   const loadStats = async () => {
     try { setStats(await adminFetch('/api/admin/stats')); } catch(e) {}
@@ -105,6 +107,7 @@ export default function AdminDashboard() {
           {id:"content",label:"📚 Content"},
           {id:"users",label:"👥 Users"},
           {id:"regen",label:"🔄 Regeneration"},
+          {id:"revenue",label:"💰 Revenue"},
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding:"10px 16px", background:"none", border:"none",
@@ -262,6 +265,57 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+      {/* REVENUE */}
+      {tab === "revenue" && (
+        <div>
+          {!revenue ? <Spinner /> : revenue.error ? <div style={{ padding:20, color:C.red }}>{revenue.error}</div> : (
+            <>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(180px, 1fr))", gap:12, marginBottom:20 }}>
+                <StatCard label="Gross Revenue" value={`£${(revenue.grossRevenue || 0).toFixed(2)}`} icon="💷" color="#22d3a0" />
+                <StatCard label="Stripe Fees" value={`£${(revenue.stripeFees || 0).toFixed(2)}`} icon="💳" color="#f59e0b" />
+                <StatCard label="Net Revenue" value={`£${(revenue.netRevenue || 0).toFixed(2)}`} icon="💰" color="#6c63ff" />
+                <StatCard label="Total Charges" value={revenue.totalCharges || 0} icon="🧾" color="#a78bfa" />
+              </div>
+
+              <div style={{ padding:"18px 20px", borderRadius:14, background:"rgba(239,68,68,0.06)", border:`1px solid rgba(239,68,68,0.25)`, marginBottom:16 }}>
+                <div style={{ fontSize:11, fontWeight:800, color:C.red, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>⚠ Set Aside for Tax (33%)</div>
+                <div style={{ fontSize:32, fontWeight:900, color:C.red, fontFamily:"var(--font-serif)" }}>£{(revenue.taxSetAside || 0).toFixed(2)}</div>
+                <div style={{ fontSize:12, color:C.textSec, marginTop:4 }}>Move this amount to a separate savings account before spending anything.</div>
+              </div>
+
+              <div style={{ padding:"18px 20px", borderRadius:14, background:"rgba(34,211,160,0.06)", border:`1px solid rgba(34,211,160,0.25)`, marginBottom:20 }}>
+                <div style={{ fontSize:11, fontWeight:800, color:C.green, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>✓ Safe to Spend</div>
+                <div style={{ fontSize:32, fontWeight:900, color:C.green, fontFamily:"var(--font-serif)" }}>£{(revenue.availableToSpend || 0).toFixed(2)}</div>
+                <div style={{ fontSize:12, color:C.textSec, marginTop:4 }}>Net revenue minus 33% tax reserve.</div>
+              </div>
+
+              {revenue.monthly?.length > 0 && (
+                <div style={{ padding:"18px 20px", borderRadius:14, background:C.surface, border:`1px solid ${C.border}` }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:C.text, marginBottom:12 }}>Monthly Revenue (Last 12 Months)</div>
+                  <div style={{ display:"flex", alignItems:"flex-end", gap:6, height:120, marginBottom:8 }}>
+                    {revenue.monthly.map((m, i) => {
+                      const max = Math.max(...revenue.monthly.map(x => x.gross), 1);
+                      const h = (m.gross / max) * 100;
+                      return (
+                        <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
+                          <div style={{ fontSize:10, color:C.textMuted }}>{m.gross > 0 ? `£${m.gross.toFixed(0)}` : ''}</div>
+                          <div title={`${m.month}: £${m.gross.toFixed(2)} (${m.count} charges)`} style={{
+                            width:"100%", height:`${Math.max(h, 1)}%`,
+                            background: `linear-gradient(180deg, ${C.accent}, #a78bfa)`, borderRadius:4,
+                            transition:"height 0.5s",
+                          }} />
+                          <div style={{ fontSize:10, color:C.textMuted }}>{m.month}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
 function StatCard({ label, value, icon, color }) {
   return (
