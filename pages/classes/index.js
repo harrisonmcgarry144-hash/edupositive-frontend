@@ -3,10 +3,22 @@ import { useAuth } from "../../context/AuthContext";
 import { classesApi } from "../../lib/api";
 import { Card, Btn, Input, C, Spinner, Tag } from "../../components/ui";
 import Link from "next/link";
+import PremiumGate from "../../components/PremiumGate";
+import { paymentsApi } from "../../lib/api";
 
 export default function Classes() {
   const { user }           = useAuth();
   const [classes, setClasses] = useState([]);
+  const [isPremium, setIsPremium] = useState(null);
+
+  useEffect(() => {
+    if (user?.role === 'teacher' || user?.role === 'admin') {
+      paymentsApi.status().then(d => setIsPremium(d.isPremium || user.role === 'admin')).catch(() => setIsPremium(false));
+    } else {
+      setIsPremium(true);
+    }
+  }, [user]);
+
   const [loading, setLoad]    = useState(true);
   const [showCreate, setCreate] = useState(false);
   const [showJoin, setJoin]     = useState(false);
@@ -43,6 +55,8 @@ export default function Classes() {
     finally { setSave(false); }
   };
 
+  if (user?.role === 'teacher' && isPremium === false) return <PremiumGate feature="Teacher Classes" icon="🏫" />;
+  if (isPremium === null) return <div style={{ display:"flex", justifyContent:"center", padding:60 }}><Spinner size={32}/></div>;
   if (loading) return <div style={{ display:"flex", justifyContent:"center", padding:60 }}><Spinner size={32}/></div>;
 
   return (

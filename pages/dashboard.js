@@ -234,8 +234,11 @@ export default function Dashboard() {
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 11, fontWeight: 700, color: u.isMe ? "#fff" : C.textSec,
                   }}>{(u.username || "?").slice(0,2).toUpperCase()}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: u.isMe ? C.accent : C.text }}>{u.username}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: u.isMe ? C.accent : C.text }}>{u.username}</span>
+                      {u.rank && <RankBadge rank={u.rank} isTop100={u.is_top100} size="sm" />}
+                    </div>
                     <div style={{ fontSize: 11, color: C.textMuted }}>{u.streak}🔥</div>
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: C.textSec }}>{u.xp?.toLocaleString()}</div>

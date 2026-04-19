@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { socialApi } from "../../lib/api";
 import { Btn, Input, C, Spinner, Empty } from "../../components/ui";
 import Link from "next/link";
+import { RankBadge } from "../../components/RankBadge";
 
 export default function Social() {
   const { user } = useAuth();
@@ -88,7 +89,7 @@ export default function Social() {
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg,var(--accent),#a78bfa)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#fff" }}>
                     {req.username.slice(0, 2).toUpperCase()}
                   </div>
-                  <div style={{ flex: 1, fontSize: 14, fontWeight: 600, color: C.text }}>{req.username}</div>
+                  <div style={{ flex: 1, display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}><span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{req.username}</span>{req.rank && <RankBadge rank={req.rank} isTop100={req.is_top100} size="sm" />}</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <Btn onClick={() => respond(req.friendship_id, true)} style={{ padding: "6px 14px", fontSize: 12 }}>Accept</Btn>
                     <Btn variant="ghost" onClick={() => respond(req.friendship_id, false)} style={{ padding: "6px 14px", fontSize: 12 }}>Decline</Btn>
@@ -105,7 +106,7 @@ export default function Social() {
                   {f.username.slice(0, 2).toUpperCase()}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{f.username}</div>
+                  <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}><span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{f.username}</span>{f.rank && <RankBadge rank={f.rank} isTop100={f.is_top100} size="sm" />}</div>
                   <div style={{ fontSize: 12, color: C.textMuted }}>Level {f.level} · {f.streak}🔥 streak</div>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{f.xp ? f.xp.toLocaleString() : 0} XP</div>
@@ -141,7 +142,7 @@ export default function Social() {
                 {u.username.slice(0, 2).toUpperCase()}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{u.username}</div>
+                <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}><span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{u.username}</span>{u.rank && <RankBadge rank={u.rank} isTop100={u.is_top100} size="sm" />}</div>
                 <div style={{ fontSize: 12, color: C.textMuted }}>Level {u.level}</div>
               </div>
               <Btn onClick={() => sendReq(u.id)} variant="ghost" style={{ padding: "7px 16px", fontSize: 12 }}>Add Friend</Btn>
@@ -178,7 +179,7 @@ function MessagesTab({ friends }) {
               {c.username ? c.username.slice(0, 2).toUpperCase() : "??"}
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{c.username}</div>
+              <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}><span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{c.username}</span>{c.rank && <RankBadge rank={c.rank} isTop100={c.is_top100} size="sm" />}</div>
               {c.last_message && <div style={{ fontSize: 12, color: C.textMuted }}>{c.last_message.slice(0, 40)}</div>}
             </div>
           </div>
