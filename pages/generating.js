@@ -25,11 +25,16 @@ export default function Generating() {
       setSubjects(statuses);
 
       // Start generation for any not yet started
-      for (const s of statuses) {
-        if (s.status !== 'complete') {
-          await generateApi.start(s.subjectId, s.board).catch(() => {});
-        }
-      }
+     const allDoneAlready = statuses.every(s => s.status === 'complete');
+if (allDoneAlready) {
+  router.replace('/dashboard');
+  return;
+}
+for (const s of statuses) {
+  if (s.status !== 'complete') {
+    await generateApi.start(s.subjectId, s.board).catch(() => {});
+  }
+}
 
       // Poll for progress
       pollRef.current = setInterval(async () => {
