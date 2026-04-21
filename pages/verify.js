@@ -18,13 +18,6 @@ useEffect(() => {
     if (user?.is_verified || user?.isVerified) router.replace("/onboarding");
   }, [user]);
 
-  // Block navigation away from verify page
-  useEffect(() => {
-    const handleBeforeUnload = (e) => { e.preventDefault(); };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
-
   const handleChange = (i, val) => {
     if (!/^\d?$/.test(val)) return;
     const next = [...code];

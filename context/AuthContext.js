@@ -1,14 +1,11 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { authApi } from "../lib/api";
 import { useRouter } from "next/router";
-
 const AuthContext = createContext({});
-
 export function AuthProvider({ children }) {
   const [user, setUser]       = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
   useEffect(() => {
     const token = localStorage.getItem("ep_token");
     if (token) {
@@ -20,34 +17,35 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   }, []);
-
   const login = async (username, password) => {
     const data = await authApi.login({ username, password });
     localStorage.setItem("ep_token", data.token);
     setUser(data.user);
+    if (data.requiresVerification) {
+      router.replace("/verify");
+    } else if (data.needsOnboarding) {
+      router.replace("/onboarding");
+    } else {
+      router.replace("/dashboard");
+    }
     return data.user;
   };
-
   const register = async (email, password, username, fullName) => {
     const data = await authApi.register({ email, password, username, fullName });
     localStorage.setItem("ep_token", data.token);
     setUser(data.user);
     return data;
   };
-
   const logout = () => {
     localStorage.removeItem("ep_token");
     setUser(null);
     router.push("/");
   };
-
   const updateUser = (updates) => setUser(u => ({ ...u, ...updates }));
-
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser, setUser }}>
       {children}
     </AuthContext.Provider>
   );
 }
-
 export const useAuth = () => useContext(AuthContext);
