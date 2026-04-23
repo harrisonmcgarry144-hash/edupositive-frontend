@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
-import { useAuth } from "../context/AuthContext";
-import { C, Btn, Spinner } from "../components/ui";
+import { useAuth } from "../../context/AuthContext";
+import { C, Btn, Spinner } from "../../components/ui";
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://edupositive-backend.onrender.com';
 
