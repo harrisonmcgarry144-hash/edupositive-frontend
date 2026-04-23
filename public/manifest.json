@@ -1,0 +1,17 @@
+{
+  "name": "EduPositive",
+  "short_name": "EduPositive",
+  "description": "A-Level revision platform with AI-powered lessons, flashcards and past papers",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#6c63ff",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/favicon-256.png", "sizes": "256x256", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ],
+  "screenshots": [],
+  "categories": ["education"],
+  "lang": "en-GB"
+}
