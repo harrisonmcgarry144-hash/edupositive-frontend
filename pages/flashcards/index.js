@@ -15,7 +15,6 @@ async function apiFetch(path, options = {}) {
   return res.json();
 }
 
-// Rating colours - BrainScape style
 const RATINGS = [
   { value: 1, label: "Not at all", color: "#ef4444", bg: "rgba(239,68,68,0.15)", emoji: "😰" },
   { value: 2, label: "Barely", color: "#f97316", bg: "rgba(249,115,22,0.15)", emoji: "😕" },
@@ -29,7 +28,7 @@ const INTERVAL_LABELS = { 0: "Today", 1: "Tomorrow", 3: "3 days", 7: "1 week", 1
 export default function Flashcards() {
   const router = useRouter();
   const { user } = useAuth();
-  const [view, setView] = useState("decks"); // decks | session | create
+  const [view, setView] = useState("decks");
   const [decks, setDecks] = useState([]);
   const [activeDeck, setActiveDeck] = useState(null);
   const [sessionCards, setSessionCards] = useState([]);
@@ -53,10 +52,7 @@ export default function Flashcards() {
     setActiveDeck(deck);
     try {
       const cards = await apiFetch(`/api/flashcards/session/${deck.id}`);
-      if (cards.length === 0) {
-        alert("No cards due for review today! Come back tomorrow.");
-        return;
-      }
+      if (cards.length === 0) { alert("No cards due for review today! Come back tomorrow."); return; }
       setSessionCards(cards);
       setView("session");
     } catch(e) { alert(e.message); }
@@ -82,31 +78,76 @@ export default function Flashcards() {
   if (view === "session" && activeDeck) {
     return <StudySession deck={activeDeck} cards={sessionCards} onFinish={() => { setView("decks"); loadDecks(); loadDue(); }} />;
   }
-
   if (view === "add-cards" && activeDeck) {
     return <AddCards deck={activeDeck} onBack={() => { setView("decks"); loadDecks(); }} />;
   }
+
+  // Group decks by subject
+  const autoDecksBySubject = {};
+  const manualDecks = [];
+  decks.forEach(deck => {
+    if (deck.is_auto_generated) {
+      const key = deck.subject_name || 'Other';
+      if (!autoDecksBySubject[key]) autoDecksBySubject[key] = [];
+      autoDecksBySubject[key].push(deck);
+    } else {
+      manualDecks.push(deck);
+    }
+  });
+
+  const renderDeck = (deck) => {
+    const pct = deck.total_cards > 0 ? Math.round((deck.mastered / deck.total_cards) * 100) : 0;
+    const hasDue = deck.due_today > 0;
+    return (
+      <div key={deck.id} style={{ marginBottom: 10, padding: "16px 18px", borderRadius: 14, background: C.surface, border: `1px solid ${hasDue ? C.accent : C.border}`, position: "relative" }}>
+        {hasDue && (
+          <div style={{ position: "absolute", top: 10, right: 14, background: C.accent, color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 100 }}>
+            {deck.due_today} due
+          </div>
+        )}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 2, paddingRight: hasDue ? 60 : 0 }}>{deck.name}</div>
+            {deck.subtopic_name && <div style={{ fontSize: 11, color: C.textMuted }}>{deck.subtopic_name}</div>}
+            <div style={{ fontSize: 11, color: C.textSec, marginTop: 2 }}>{deck.total_cards || 0} cards · {deck.mastered || 0} mastered</div>
+          </div>
+        </div>
+        {deck.total_cards > 0 && (
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ height: 4, background: "var(--surface-high)", borderRadius: 100, overflow: "hidden" }}>
+              <div style={{ height: "100%", background: `linear-gradient(90deg, #22d3a0, #3b82f6)`, width: `${pct}%`, borderRadius: 100 }} />
+            </div>
+            <div style={{ fontSize: 10, color: C.textMuted, marginTop: 3 }}>{pct}% mastered</div>
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 8 }}>
+          <Btn onClick={() => startSession(deck)} disabled={!hasDue} style={{ flex: 2, padding: "9px", fontSize: 12 }}>
+            {hasDue ? `Study (${deck.due_today})` : "All caught up ✓"}
+          </Btn>
+          <button onClick={() => { setActiveDeck(deck); setView("add-cards"); }} style={{ flex: 1, padding: "9px", borderRadius: 10, background: "transparent", border: `1px solid ${C.border}`, color: C.textSec, fontSize: 12, cursor: "pointer" }}>+ Cards</button>
+          {!deck.is_auto_generated && (
+            <button onClick={() => deleteDeck(deck.id)} style={{ padding: "9px 12px", borderRadius: 10, background: "transparent", border: `1px solid ${C.border}`, color: "#ef4444", fontSize: 12, cursor: "pointer" }}>🗑</button>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px", maxWidth: 680, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, fontFamily: "var(--font-serif)", margin: 0 }}>Flashcards</h1>
-          {dueCount > 0 && (
-            <div style={{ fontSize: 13, color: C.accent, fontWeight: 600, marginTop: 4 }}>
-              {dueCount} card{dueCount !== 1 ? 's' : ''} due for review today
-            </div>
-          )}
+          {dueCount > 0 && <div style={{ fontSize: 13, color: C.accent, fontWeight: 600, marginTop: 4 }}>{dueCount} card{dueCount !== 1 ? 's' : ''} due today</div>}
         </div>
-        <Btn onClick={() => setShowCreate(true)} style={{ padding: "10px 18px", fontSize: 13 }}>+ New Deck</Btn>
+        <Btn onClick={() => setShowCreate(true)} style={{ padding: "10px 16px", fontSize: 13 }}>+ New Deck</Btn>
       </div>
 
-      {/* Create deck modal */}
       {showCreate && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 24 }}>
           <div style={{ background: C.surface, borderRadius: 18, padding: 28, width: "100%", maxWidth: 400, border: `1px solid ${C.border}` }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: C.text, marginBottom: 16 }}>New Deck</div>
-            <input value={newDeck.name} onChange={e => setNewDeck(p => ({...p, name: e.target.value}))} placeholder="Deck name (e.g. Biological Molecules)"
+            <input value={newDeck.name} onChange={e => setNewDeck(p => ({...p, name: e.target.value}))} placeholder="Deck name"
               style={{ width: "100%", padding: "12px 14px", borderRadius: 10, background: "var(--surface-high)", border: `1px solid ${C.border}`, color: C.text, fontSize: 14, outline: "none", marginBottom: 10, boxSizing: "border-box" }} />
             <textarea value={newDeck.description} onChange={e => setNewDeck(p => ({...p, description: e.target.value}))} placeholder="Description (optional)" rows={2}
               style={{ width: "100%", padding: "12px 14px", borderRadius: 10, background: "var(--surface-high)", border: `1px solid ${C.border}`, color: C.text, fontSize: 14, outline: "none", resize: "none", marginBottom: 16, boxSizing: "border-box" }} />
@@ -126,53 +167,26 @@ export default function Flashcards() {
             <div style={{ padding: 48, textAlign: "center", background: C.surface, borderRadius: 16, border: `1px solid ${C.border}` }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>🗂</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 8 }}>No flashcard decks yet</div>
-              <div style={{ fontSize: 13, color: C.textSec, marginBottom: 20 }}>Complete all your lessons to get auto-generated flashcards, or create your own deck.</div>
+              <div style={{ fontSize: 13, color: C.textSec, marginBottom: 20 }}>Complete lessons to get auto-generated flashcards, or create your own.</div>
               <Btn onClick={() => setShowCreate(true)} style={{ padding: "12px 24px" }}>Create a deck</Btn>
             </div>
           )}
 
-          {decks.map(deck => {
-            const pct = deck.total_cards > 0 ? Math.round((deck.mastered / deck.total_cards) * 100) : 0;
-            const hasDue = deck.due_today > 0;
-            return (
-              <div key={deck.id} style={{ marginBottom: 12, padding: "18px 20px", borderRadius: 16, background: C.surface, border: `1px solid ${hasDue ? C.accent : C.border}`, position: "relative" }}>
-                {hasDue && (
-                  <div style={{ position: "absolute", top: 12, right: 16, background: C.accent, color: "#fff", fontSize: 11, fontWeight: 800, padding: "3px 8px", borderRadius: 100 }}>
-                    {deck.due_today} due
-                  </div>
-                )}
+          {/* Auto-generated decks grouped by subject */}
+          {Object.entries(autoDecksBySubject).map(([subject, subjectDecks]) => (
+            <div key={subject} style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: C.accent, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingLeft: 2 }}>📚 {subject}</div>
+              {subjectDecks.map(renderDeck)}
+            </div>
+          ))}
 
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--accent-soft)", color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🗂</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{deck.name}</div>
-                    {deck.subject_name && <div style={{ fontSize: 11, color: C.textMuted }}>{deck.subject_name}{deck.topic_name ? ` · ${deck.topic_name}` : ''}</div>}
-                    <div style={{ fontSize: 12, color: C.textSec, marginTop: 2 }}>{deck.total_cards || 0} cards · {deck.mastered || 0} mastered</div>
-                  </div>
-                </div>
-
-                {/* Progress bar */}
-                {deck.total_cards > 0 && (
-                  <div style={{ marginBottom: 12 }}>
-                    <div style={{ height: 6, background: "var(--surface-high)", borderRadius: 100, overflow: "hidden" }}>
-                      <div style={{ height: "100%", background: `linear-gradient(90deg, #22d3a0, #3b82f6)`, width: `${pct}%`, borderRadius: 100, transition: "width 0.5s" }} />
-                    </div>
-                    <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>{pct}% mastered</div>
-                  </div>
-                )}
-
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Btn onClick={() => startSession(deck)} disabled={!hasDue} style={{ flex: 2, padding: "10px", fontSize: 13 }}>
-                    {hasDue ? `Study (${deck.due_today})` : "All caught up ✓"}
-                  </Btn>
-                  <button onClick={() => { setActiveDeck(deck); setView("add-cards"); }} style={{ flex: 1, padding: "10px", borderRadius: 10, background: "transparent", border: `1px solid ${C.border}`, color: C.textSec, fontSize: 13, cursor: "pointer" }}>+ Cards</button>
-                  {!deck.is_auto_generated && (
-                    <button onClick={() => deleteDeck(deck.id)} style={{ padding: "10px 12px", borderRadius: 10, background: "transparent", border: `1px solid ${C.border}`, color: C.red, fontSize: 13, cursor: "pointer" }}>🗑</button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {/* Manual decks */}
+          {manualDecks.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingLeft: 2 }}>✏️ My Custom Decks</div>
+              {manualDecks.map(renderDeck)}
+            </div>
+          )}
         </>
       )}
     </div>
