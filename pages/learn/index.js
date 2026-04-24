@@ -40,13 +40,17 @@ export default function Learn() {
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 4, fontFamily: "var(--font-serif)" }}>Learn</h1>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: C.text, fontFamily: "var(--font-serif)", margin:0 }}>Learn</h1>
+        <Link href="/onboarding" style={{ width:36, height:36, borderRadius:"50%", background:"var(--accent-soft)", border:`1px solid var(--accent-glow)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, color:C.accent, textDecoration:"none", lineHeight:1 }}>+</Link>
+      </div>
       <p style={{ fontSize: 13, color: C.textSec, marginBottom: 24 }}>Browse your A-Level subjects and topics</p>
 
       {subjects.length === 0 && (
         <div style={{ textAlign:"center", padding:40 }}>
           <div style={{ fontSize:40, marginBottom:12 }}>📚</div>
-          <p style={{ color:C.textSec }}>No subjects yet. Go to Settings to select your subjects.</p>
+          <p style={{ color:C.textSec, marginBottom:16 }}>No subjects yet. Add your A-Level subjects to get started.</p>
+          <Link href="/onboarding" style={{ padding:"12px 24px", borderRadius:12, background:C.accent, color:"#fff", textDecoration:"none", fontSize:14, fontWeight:700 }}>Add subjects →</Link>
         </div>
       )}
 
@@ -57,7 +61,6 @@ export default function Learn() {
 
         return (
           <div key={subject.id} style={{ marginBottom: 12 }}>
-            {/* Subject row */}
             <div
               onClick={() => toggle(subject.id)}
               style={{
@@ -76,9 +79,7 @@ export default function Learn() {
                   </div>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap: 10 }}>
-                  {subPct > 0 && (
-                    <div style={{ fontSize: 13, fontWeight: 700, color: pctColor(subPct) }}>{subPct}%</div>
-                  )}
+                  {subPct > 0 && <div style={{ fontSize: 13, fontWeight: 700, color: pctColor(subPct) }}>{subPct}%</div>}
                   <span style={{ color: C.textMuted, fontSize: 18, transition:"transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none" }}>▾</span>
                 </div>
               </div>
@@ -89,21 +90,14 @@ export default function Learn() {
               )}
             </div>
 
-            {/* Topics */}
             {isOpen && (
               <div style={{ background:"var(--surface-high)", border:`1px solid ${C.accent}`, borderTop:"none", borderRadius:"0 0 14px 14px", padding:"8px 0" }}>
-                {topics.length === 0 && (
-                  <div style={{ padding:"20px", textAlign:"center", color:C.textMuted, fontSize:13 }}>Loading topics…</div>
-                )}
+                {topics.length === 0 && <div style={{ padding:"20px", textAlign:"center", color:C.textMuted, fontSize:13 }}>Loading topics…</div>}
                 {topics.map((topic, ti) => {
                   const topicPct = progress[subject.id]?.topics?.[topic.id] || 0;
                   return (
                     <Link key={topic.id} href={`/learn/topic/${topic.id}`} style={{ textDecoration:"none", display:"block" }}>
-                      <div style={{
-                        padding:"12px 20px", display:"flex", justifyContent:"space-between", alignItems:"center",
-                        borderBottom: ti < topics.length-1 ? `1px solid ${C.border}` : "none",
-                        cursor:"pointer",
-                      }}>
+                      <div style={{ padding:"12px 20px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom: ti < topics.length-1 ? `1px solid ${C.border}` : "none", cursor:"pointer" }}>
                         <div style={{ flex:1 }}>
                           <div style={{ fontSize:14, fontWeight:600, color:C.text, marginBottom: topicPct > 0 ? 6 : 0 }}>{topic.name}</div>
                           {topicPct > 0 && (
@@ -125,6 +119,14 @@ export default function Learn() {
           </div>
         );
       })}
+
+      {/* Add more subjects button */}
+      {subjects.length > 0 && (
+        <Link href="/onboarding" style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"16px 20px", borderRadius:14, background:"transparent", border:`1px dashed ${C.border}`, textDecoration:"none", marginTop:8 }}>
+          <span style={{ fontSize:18, color:C.textMuted }}>+</span>
+          <span style={{ fontSize:14, fontWeight:600, color:C.textMuted }}>Add or change subjects</span>
+        </Link>
+      )}
     </div>
   );
 }
