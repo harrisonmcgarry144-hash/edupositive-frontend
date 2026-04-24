@@ -36,13 +36,24 @@ export default function Learn() {
 
   const pctColor = (p) => p >= 80 ? C.green : p >= 50 ? C.amber : p > 0 ? C.accent : C.border;
 
-  if (loading) return <div style={{ display:"flex", justifyContent:"center", padding: 60 }}><Spinner size={32}/></div>;
+  if (loading) return (
+    <div style={{ padding: "20px 16px 100px" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
+        <div style={{ height:28, width:80, borderRadius:8, background:"var(--surface-high)" }} />
+        <div style={{ width:36, height:36, borderRadius:"50%", background:"var(--surface-high)" }} />
+      </div>
+      <div style={{ height:13, width:200, borderRadius:6, background:"var(--surface-high)", marginBottom:24, marginTop:8 }} />
+      {[1,2,3].map(i => (
+        <div key={i} style={{ height:72, borderRadius:14, background:"var(--surface-high)", marginBottom:12 }} />
+      ))}
+    </div>
+  );
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, color: C.text, fontFamily: "var(--font-serif)", margin:0 }}>Learn</h1>
-        <Link href="/onboarding" style={{ width:36, height:36, borderRadius:"50%", background:"var(--accent-soft)", border:`1px solid var(--accent-glow)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, color:C.accent, textDecoration:"none", lineHeight:1 }}>+</Link>
+        <Link href="/edit-subjects" style={{ width:36, height:36, borderRadius:"50%", background:"var(--accent-soft)", border:`1px solid var(--accent-glow)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, color:C.accent, textDecoration:"none", lineHeight:1 }}>+</Link>
       </div>
       <p style={{ fontSize: 13, color: C.textSec, marginBottom: 24 }}>Browse your A-Level subjects and topics</p>
 
@@ -50,7 +61,7 @@ export default function Learn() {
         <div style={{ textAlign:"center", padding:40 }}>
           <div style={{ fontSize:40, marginBottom:12 }}>📚</div>
           <p style={{ color:C.textSec, marginBottom:16 }}>No subjects yet. Add your A-Level subjects to get started.</p>
-          <Link href="/onboarding" style={{ padding:"12px 24px", borderRadius:12, background:C.accent, color:"#fff", textDecoration:"none", fontSize:14, fontWeight:700 }}>Add subjects →</Link>
+          <Link href="/edit-subjects" style={{ padding:"12px 24px", borderRadius:12, background:C.accent, color:"#fff", textDecoration:"none", fontSize:14, fontWeight:700 }}>Add subjects →</Link>
         </div>
       )}
 
@@ -120,9 +131,8 @@ export default function Learn() {
         );
       })}
 
-      {/* Add more subjects button */}
       {subjects.length > 0 && (
-        <Link href="/onboarding" style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"16px 20px", borderRadius:14, background:"transparent", border:`1px dashed ${C.border}`, textDecoration:"none", marginTop:8 }}>
+        <Link href="/edit-subjects" style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"16px 20px", borderRadius:14, background:"transparent", border:`1px dashed ${C.border}`, textDecoration:"none", marginTop:8 }}>
           <span style={{ fontSize:18, color:C.textMuted }}>+</span>
           <span style={{ fontSize:14, fontWeight:600, color:C.textMuted }}>Add or change subjects</span>
         </Link>

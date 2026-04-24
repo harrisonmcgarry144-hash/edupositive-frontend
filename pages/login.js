@@ -44,7 +44,7 @@ export default function Login() {
         <h2 style={{ fontSize:24, fontWeight:800, color:C.text, marginBottom:6, fontFamily:"var(--font-serif)" }}>Welcome back</h2>
         <p style={{ color:C.textSec, fontSize:13, marginBottom:28 }}>Sign in to continue your revision</p>
         <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-          <Input placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} onKeyDown={handleKey} />
+          <Input placeholder="Email or username" value={username} onChange={e => setUsername(e.target.value)} onKeyDown={handleKey} />
           <Input placeholder="Password" value={pass} onChange={e => setPass(e.target.value)} type="password" onKeyDown={handleKey} />
           {error && <div style={{ padding:"10px 14px", borderRadius:8, background:"rgba(239,68,68,0.12)", color:C.red, fontSize:13 }}>{error}</div>}
           <Btn onClick={handle} disabled={loading} style={{ marginTop:4, padding:"13px", fontSize:15, width:"100%" }}>
