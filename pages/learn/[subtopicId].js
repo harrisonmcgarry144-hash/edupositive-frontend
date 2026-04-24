@@ -13,6 +13,13 @@ async function apiFetch(path, opts = {}) {
   return res.ok ? res.json() : Promise.reject(await res.json());
 }
 
+// Award XP helper
+async function awardXP(action) {
+  try {
+    await apiFetch('/api/study/xp', { method: 'POST', body: JSON.stringify({ action }) });
+  } catch(e) {}
+}
+
 function parseSections(content) {
   if (!content) return [];
   const sections = [];
@@ -287,7 +294,9 @@ function LessonMode({ lesson, onBack, onExit, onComplete }) {
 
   const onAnswer = (correct, userAnswer, correctAnswer) => {
     setAnswered(correct ? 'correct' : 'wrong');
+    awardXP('question_attempted');
     if (correct) {
+      awardXP('question_correct');
       setSessionCorrect(c => c + 1);
       setTimeout(() => advanceCard(), 900);
     } else {
@@ -674,7 +683,12 @@ function RapidFireMode({ lesson, onExit, onComplete, subtopicId }) {
   };
 
   const advance = (correct) => {
-    if (idx >= questions.length - 1) { setDone(true); return; }
+    if (idx >= questions.length - 1) {
+      awardXP('rapidfire_completed');
+      const pct = Math.round((score / questions.length) * 100);
+      if (pct >= 70) awardXP('rapidfire_score_70');
+      setDone(true); return;
+    }
     setIdx(i => i + 1);
     setSelected(null);
     setAnswered(false);
@@ -869,6 +883,10 @@ function BlurtMode({ lesson, onBack, onExit, onComplete }) {
     try {
       const res = await apiFetch('/api/ai/blurt', { method:'POST', body: JSON.stringify({ subtopicId: lesson.subtopic_id, userText: text }) });
       setResult(res);
+      await awardXP('blurt_submitted');
+      if (res.score >= 95) await awardXP('blurt_perfect');
+      else if (res.score >= 80) await awardXP('blurt_score_80');
+      else if (res.score >= 50) await awardXP('blurt_score_50');
     } catch(e) { alert("Couldn't grade your answer"); }
     setSubmitting(false);
   };
