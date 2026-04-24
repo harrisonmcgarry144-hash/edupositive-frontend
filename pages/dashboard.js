@@ -16,6 +16,15 @@ export default function Dashboard() {
   const [revisingNow, setRevisingNow] = useState(null);
   const [rank, setRank] = useState(null);
 
+  // Send heartbeat every 60s so we appear in "revising now" count
+  useEffect(() => {
+    const token = localStorage.getItem('ep_token');
+    const beat = () => fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://edupositive-backend.onrender.com'}/api/gamification/heartbeat`, { method:'POST', headers:{ 'Authorization': `Bearer ${token}` } }).catch(()=>{});
+    beat();
+    const interval = setInterval(beat, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     Promise.all([
@@ -78,7 +87,7 @@ export default function Dashboard() {
         {revisingNow && (
           <div style={{ marginTop:12, padding:"8px 14px", borderRadius:100, background:"rgba(34,211,160,0.1)", border:"1px solid rgba(34,211,160,0.2)", display:"inline-flex", alignItems:"center", gap:6 }}>
             <div style={{ width:7, height:7, borderRadius:"50%", background:C.green, animation:"pulse 2s infinite" }}/>
-            <span style={{ fontSize:12, color:C.green, fontWeight:600 }}>{revisingNow.toLocaleString()} people revising right now</span>
+            <span style={{ fontSize:12, color:C.green, fontWeight:600 }}>🟢 {revisingNow.toLocaleString()} {revisingNow === 1 ? "student" : "students"} revising right now</span>
           </div>
         )}
       </div>
