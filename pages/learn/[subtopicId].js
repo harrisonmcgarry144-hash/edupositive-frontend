@@ -35,7 +35,7 @@ export default function SubtopicPage() {
   const { subtopicId } = router.query;
   const [lessons, setLessons] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [mode, setMode] = useState(null); // lesson | quiz | blurt | mindmap
+  const [mode, setMode] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -73,8 +73,7 @@ export default function SubtopicPage() {
         <div key={l.id} onClick={() => openLesson(l.id)} style={{
           padding:"18px 20px", borderRadius:16, background:C.surface,
           border:`1px solid ${l.completed ? C.green : C.border}`,
-          marginBottom:10, cursor:"pointer",
-          display:"flex", alignItems:"center", gap:14,
+          marginBottom:10, cursor:"pointer", display:"flex", alignItems:"center", gap:14,
         }}>
           <div style={{ width:40, height:40, borderRadius:10, background:l.completed ? C.green : "var(--accent-soft)", color:l.completed ? "#fff" : C.accent, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, fontWeight:800, flexShrink:0 }}>
             {l.completed ? "✓" : i + 1}
@@ -90,7 +89,6 @@ export default function SubtopicPage() {
   );
 }
 
-// Mode selection screen (lesson/quiz/blurt/mindmap) — like Seneca
 function LessonModeSelect({ lesson, onSelect, onBack }) {
   const modes = [
     { id:"lesson", icon:"📖", label:"Learn", desc:"Go through the lesson at your own pace", color:"#6c63ff" },
@@ -98,14 +96,12 @@ function LessonModeSelect({ lesson, onSelect, onBack }) {
     { id:"blurt", icon:"🧠", label:"Blurt", desc:"Write everything you remember — AI marks it", color:"#f59e0b" },
     { id:"mindmap", icon:"🗺️", label:"Mind Map", desc:"Build a mind map — AI grades the connections", color:"#a78bfa" },
   ];
-
   return (
     <div style={{ padding:"20px 16px 100px", maxWidth:680, margin:"0 auto" }}>
       <button onClick={onBack} style={{ background:"none", border:"none", color:C.accent, fontSize:14, cursor:"pointer", marginBottom:20 }}>← Back to lessons</button>
       <div style={{ fontSize:12, color:C.textMuted, marginBottom:4 }}>{lesson.subject_name} · {lesson.topic_name}</div>
       <h1 style={{ fontSize:28, fontWeight:800, color:C.text, marginBottom:8, fontFamily:"var(--font-serif)", lineHeight:1.2 }}>{lesson.title}</h1>
       <p style={{ fontSize:13, color:C.textSec, marginBottom:28 }}>How would you like to study this?</p>
-
       <div style={{ display:"grid", gridTemplateColumns:"repeat(2, 1fr)", gap:12 }}>
         {modes.map(m => (
           <button key={m.id} onClick={() => onSelect(m.id)} style={{
@@ -113,8 +109,7 @@ function LessonModeSelect({ lesson, onSelect, onBack }) {
             textAlign:"left", cursor:"pointer", transition:"all 0.15s",
           }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = m.color; e.currentTarget.style.transform = "translateY(-2px)"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "translateY(0)"; }}
-          >
+          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "translateY(0)"; }}>
             <div style={{ width:44, height:44, borderRadius:12, background:`${m.color}22`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, marginBottom:12 }}>{m.icon}</div>
             <div style={{ fontSize:16, fontWeight:800, color:C.text, marginBottom:4 }}>{m.label}</div>
             <div style={{ fontSize:12, color:C.textSec, lineHeight:1.5 }}>{m.desc}</div>
@@ -133,7 +128,7 @@ function ModeView({ lesson, mode, onBack, onExit, onComplete }) {
   return null;
 }
 
-// ═══ LESSON MODE: Seneca-style swipeable cards ══════════════════════════════
+// ═══ LESSON MODE ═══════════════════════════════════════════════════════════
 function LessonMode({ lesson, onBack, onExit, onComplete }) {
   const sections = parseSections(lesson.content);
   const allCards = [];
@@ -144,11 +139,10 @@ function LessonMode({ lesson, onBack, onExit, onComplete }) {
   });
 
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [unlockedIdx, setUnlockedIdx] = useState(1);
-  const [showQuestion, setShowQuestion] = useState(false);
-  const [questions, setQuestions] = useState({});
+  const [phase, setPhase] = useState("read"); // read | check | result
+  const [question, setQuestion] = useState(null);
   const [loadingQ, setLoadingQ] = useState(false);
-  const [answered, setAnswered] = useState({});
+  const [answered, setAnswered] = useState(null); // null | 'correct' | 'wrong'
   const [completed, setCompleted] = useState(false);
   const [showLeave, setShowLeave] = useState(false);
   const [slideDir, setSlideDir] = useState('none');
@@ -156,60 +150,64 @@ function LessonMode({ lesson, onBack, onExit, onComplete }) {
 
   const total = allCards.length;
   const isLast = currentIdx === total - 1;
+  const card = allCards[currentIdx];
+  const theme = SECTION_THEMES[card?.sectionTitle] || DEFAULT_THEME;
+  const progress = Math.round(((currentIdx + 1) / total) * 100);
 
-  const loadQuestion = async (idx) => {
-    if (questions[idx] || loadingQ) return;
+  const loadQuestion = async () => {
     setLoadingQ(true);
+    setQuestion(null);
     try {
       const token = localStorage.getItem('ep_token');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://edupositive-backend.onrender.com'}/api/content/lessons/${lesson.id}/paragraph-quiz`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ paragraph: allCards[idx].paragraph, paragraphIndex: idx })
+        body: JSON.stringify({ paragraph: card.paragraph, paragraphIndex: currentIdx })
       });
-      if (res.ok) {
-        const q = await res.json();
-        setQuestions(p => ({...p, [idx]: q}));
-      }
+      if (res.ok) setQuestion(await res.json());
     } catch(e) {}
     setLoadingQ(false);
   };
 
-  const goNext = () => {
-    if (currentIdx >= total - 1) return;
-    if (showQuestion) setShowQuestion(false);
+  // "Next" now triggers the quick check first
+  const handleNext = () => {
+    if (isLast) {
+      handleComplete();
+      return;
+    }
+    setPhase("check");
+    setAnswered(null);
+    loadQuestion();
+  };
+
+  const advanceCard = () => {
     setSlideDir('left');
     setTimeout(() => {
       setCurrentIdx(i => i + 1);
-      if (currentIdx + 1 >= unlockedIdx) setUnlockedIdx(currentIdx + 2);
+      setPhase("read");
+      setQuestion(null);
+      setAnswered(null);
       setSlideDir('none');
     }, 200);
   };
+
+  const onAnswer = (correct) => {
+    setAnswered(correct ? 'correct' : 'wrong');
+    if (correct) setTimeout(() => advanceCard(), 900);
+  };
+
+  const skipCheck = () => advanceCard();
 
   const goPrev = () => {
     if (currentIdx <= 0) return;
-    setShowQuestion(false);
     setSlideDir('right');
     setTimeout(() => {
       setCurrentIdx(i => i - 1);
+      setPhase("read");
+      setQuestion(null);
+      setAnswered(null);
       setSlideDir('none');
     }, 200);
-  };
-
-  const showQuestionNow = () => {
-    if (!questions[currentIdx]) loadQuestion(currentIdx);
-    setShowQuestion(true);
-  };
-
-  const onTouchStart = (e) => { touchStart.current = e.touches[0].clientX; };
-  const onTouchEnd = (e) => {
-    if (touchStart.current === null) return;
-    const diff = e.changedTouches[0].clientX - touchStart.current;
-    if (Math.abs(diff) > 60) {
-      if (diff > 0) goPrev();
-      else goNext();
-    }
-    touchStart.current = null;
   };
 
   const handleComplete = async () => {
@@ -218,9 +216,15 @@ function LessonMode({ lesson, onBack, onExit, onComplete }) {
     setTimeout(() => onComplete(), 1000);
   };
 
-  const progress = Math.round(((currentIdx + 1) / total) * 100);
-  const card = allCards[currentIdx];
-  const theme = SECTION_THEMES[card?.sectionTitle] || DEFAULT_THEME;
+  const onTouchStart = (e) => { touchStart.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (touchStart.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStart.current;
+    if (Math.abs(diff) > 60) {
+      if (diff > 0) goPrev();
+    }
+    touchStart.current = null;
+  };
 
   return (
     <div style={{ minHeight:"100vh", background:C.bg, display:"flex", flexDirection:"column" }}>
@@ -236,11 +240,11 @@ function LessonMode({ lesson, onBack, onExit, onComplete }) {
       </div>
 
       {/* Card area */}
-      <div style={{ flex:1, display:"flex", flexDirection:"column", padding:"20px 16px", maxWidth:680, width:"100%", margin:"0 auto", overflow:"hidden" }}
+      <div style={{ flex:1, display:"flex", flexDirection:"column", padding:"20px 16px", maxWidth:680, width:"100%", margin:"0 auto" }}
         onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
 
         {/* Section label */}
-        {card?.isFirst && (
+        {card?.isFirst && phase === "read" && (
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:16 }}>
             <span style={{ fontSize:20 }}>{theme.icon}</span>
             <span style={{ fontSize:12, fontWeight:800, color:theme.accent, textTransform:"uppercase", letterSpacing:"0.08em" }}>{card.sectionTitle}</span>
@@ -249,53 +253,47 @@ function LessonMode({ lesson, onBack, onExit, onComplete }) {
 
         {/* Main card */}
         <div style={{
-          flex:1, background:theme.bg, borderRadius:24,
-          border:`1px solid ${theme.accent}33`,
+          flex:1, background: phase === "check" ? "var(--surface-high)" : theme.bg, borderRadius:24,
+          border:`1px solid ${phase === "check" ? C.accent : theme.accent + "33"}`,
           padding:"32px 28px", display:"flex", flexDirection:"column", justifyContent:"center",
           minHeight:300,
           transform: slideDir === 'left' ? 'translateX(-20px)' : slideDir === 'right' ? 'translateX(20px)' : 'translateX(0)',
           opacity: slideDir === 'none' ? 1 : 0.3,
           transition: 'all 0.2s ease',
         }}>
-          {showQuestion && questions[currentIdx] ? (
-            <QuestionInline q={questions[currentIdx]} answered={answered[currentIdx]}
-              onAnswer={(correct) => {
-                setAnswered(p => ({...p, [currentIdx]: correct ? 'correct' : 'wrong'}));
-                if (correct) setTimeout(() => goNext(), 1000);
-              }}
-              onClose={() => setShowQuestion(false)} />
-          ) : showQuestion && loadingQ ? (
-            <div style={{ textAlign:"center" }}>
-              <Spinner size={24} />
-              <div style={{ marginTop:12, fontSize:13, color:C.textMuted }}>Creating a question…</div>
-            </div>
-          ) : (
+          {phase === "read" && (
             <p style={{ fontSize:18, color:C.text, lineHeight:1.8, margin:0, whiteSpace:"pre-wrap" }}>{card?.paragraph}</p>
+          )}
+
+          {phase === "check" && (
+            loadingQ ? (
+              <div style={{ textAlign:"center" }}>
+                <Spinner size={24} />
+                <div style={{ marginTop:12, fontSize:13, color:C.textMuted }}>Generating question…</div>
+              </div>
+            ) : question ? (
+              <QuestionInline q={question} answered={answered} onAnswer={onAnswer} onSkip={skipCheck} />
+            ) : (
+              <div style={{ textAlign:"center" }}>
+                <div style={{ fontSize:13, color:C.textMuted, marginBottom:16 }}>Couldn't load question.</div>
+                <Btn onClick={skipCheck} style={{ padding:"10px 24px" }}>Skip →</Btn>
+              </div>
+            )
           )}
         </div>
 
-        {/* Action buttons */}
-        {!showQuestion && (
+        {/* Buttons */}
+        {phase === "read" && (
           <div style={{ display:"flex", gap:10, marginTop:16 }}>
             <button onClick={goPrev} disabled={currentIdx === 0} style={{
               padding:"14px", borderRadius:12, background:"var(--surface-high)",
-              border:`1px solid ${C.border}`, color:C.textSec, cursor: currentIdx === 0 ? "not-allowed" : "pointer",
+              border:`1px solid ${C.border}`, color:C.textSec,
+              cursor: currentIdx === 0 ? "not-allowed" : "pointer",
               opacity: currentIdx === 0 ? 0.4 : 1, fontSize:18, width:56,
             }}>←</button>
-
-            <button onClick={showQuestionNow} style={{
-              flex:1, padding:"14px", borderRadius:12,
-              background:"var(--surface-high)", border:`1px solid ${C.border}`,
-              color:C.text, cursor:"pointer", fontSize:13, fontWeight:600,
-            }}>✦ Quick check</button>
-
-            {isLast ? (
-              <Btn onClick={handleComplete} disabled={completed} style={{ flex:1, padding:"14px" }}>
-                {completed ? "✓ Done!" : "Finish →"}
-              </Btn>
-            ) : (
-              <Btn onClick={goNext} style={{ flex:1, padding:"14px" }}>Next →</Btn>
-            )}
+            <Btn onClick={handleNext} style={{ flex:1, padding:"14px" }}>
+              {isLast ? (completed ? "✓ Done!" : "Finish →") : "Next →"}
+            </Btn>
           </div>
         )}
       </div>
@@ -317,24 +315,23 @@ function LessonMode({ lesson, onBack, onExit, onComplete }) {
   );
 }
 
-function QuestionInline({ q, answered, onAnswer, onClose }) {
-  const [typed, setTyped] = useState("");
+function QuestionInline({ q, answered, onAnswer, onSkip }) {
   const hasMC = q.options && Array.isArray(q.options) && q.options.length > 0;
-
-  const check = (chosen, isCorrect) => {
-    onAnswer(isCorrect);
-  };
+  const [typed, setTyped] = useState("");
+  const [selected, setSelected] = useState(null);
 
   if (answered) {
     return (
       <div>
         <div style={{ padding:"16px", borderRadius:14, background: answered === 'correct' ? "rgba(34,211,160,0.15)" : "rgba(239,68,68,0.15)", border:`1px solid ${answered === 'correct' ? C.green : C.red}`, marginBottom:12 }}>
-          <div style={{ fontSize:14, fontWeight:800, color: answered === 'correct' ? C.green : C.red, marginBottom:8 }}>
-            {answered === 'correct' ? "✓ Correct!" : "✗ Not quite"}
+          <div style={{ fontSize:15, fontWeight:800, color: answered === 'correct' ? C.green : C.red, marginBottom:8 }}>
+            {answered === 'correct' ? "✓ Correct! Moving on…" : "✗ Not quite"}
           </div>
           <div style={{ fontSize:14, color:C.text, lineHeight:1.6 }}>{q.answer}</div>
         </div>
-        {answered === 'wrong' && <Btn onClick={() => onAnswer(true)} style={{ width:"100%", padding:"12px" }}>Continue →</Btn>}
+        {answered === 'wrong' && (
+          <Btn onClick={() => onAnswer(true)} style={{ width:"100%", padding:"12px" }}>Got it, continue →</Btn>
+        )}
       </div>
     );
   }
@@ -343,32 +340,41 @@ function QuestionInline({ q, answered, onAnswer, onClose }) {
     <div>
       <div style={{ fontSize:12, fontWeight:800, color:C.accent, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>✦ Quick Check</div>
       <div style={{ fontSize:16, fontWeight:600, color:C.text, marginBottom:16, lineHeight:1.5 }}>{q.question}</div>
+
       {hasMC ? (
-        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:12 }}>
           {q.options.map((opt, i) => {
-            const correct = opt === q.correctOption || i === q.correctIndex;
+            const isCorrect = i === q.correctIndex;
+            const isSelected = selected === i;
             return (
-              <button key={i} onClick={() => check(opt, correct)} style={{
-                padding:"14px 16px", borderRadius:12, border:`1px solid ${C.border}`,
-                background:C.surface, color:C.text, fontSize:14, cursor:"pointer",
-                textAlign:"left",
+              <button key={i} onClick={() => {
+                setSelected(i);
+                setTimeout(() => onAnswer(isCorrect), 300);
+              }} style={{
+                padding:"14px 16px", borderRadius:12,
+                border:`2px solid ${isSelected ? (isCorrect ? C.green : C.red) : C.border}`,
+                background: isSelected ? (isCorrect ? "rgba(34,211,160,0.12)" : "rgba(239,68,68,0.12)") : C.surface,
+                color:C.text, fontSize:14, cursor:"pointer", textAlign:"left", transition:"all 0.15s",
               }}>{opt}</button>
             );
           })}
         </div>
       ) : (
-        <div>
-          <textarea value={typed} onChange={e => setTyped(e.target.value)} placeholder="Type your answer…" rows={2}
+        <div style={{ marginBottom:12 }}>
+          <textarea value={typed} onChange={e => setTyped(e.target.value)} placeholder="Type your answer…" rows={3}
             style={{ width:"100%", padding:"12px 14px", background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, color:C.text, fontSize:14, lineHeight:1.6, resize:"none", outline:"none", boxSizing:"border-box" }} />
-          <Btn onClick={() => check(typed, typed.length > 10)} disabled={!typed.trim()} style={{ width:"100%", padding:"12px", marginTop:8 }}>Check →</Btn>
+          <Btn onClick={() => onAnswer(typed.length > 10)} disabled={!typed.trim()} style={{ width:"100%", padding:"12px", marginTop:8 }}>Check →</Btn>
         </div>
       )}
-      <button onClick={onClose} style={{ background:"none", border:"none", color:C.textMuted, fontSize:12, cursor:"pointer", marginTop:12, width:"100%" }}>Skip for now</button>
+
+      <button onClick={onSkip} style={{ background:"none", border:"none", color:C.textMuted, fontSize:12, cursor:"pointer", width:"100%", textAlign:"center", padding:"8px" }}>
+        Skip question →
+      </button>
     </div>
   );
 }
 
-// ═══ QUIZ MODE ═══════════════════════════════════════════════════════════════
+// ═══ QUIZ MODE ════════════════════════════════════════════════════════════════
 function QuizMode({ lesson, onBack, onExit, onComplete }) {
   const questions = lesson.questions || [];
   const [idx, setIdx] = useState(0);
@@ -401,43 +407,35 @@ function QuizMode({ lesson, onBack, onExit, onComplete }) {
           <span style={{ fontSize:12, color:C.textMuted, minWidth:38, textAlign:"right" }}>{idx + 1}/{questions.length}</span>
         </div>
       </div>
-
       <div style={{ padding:"24px 16px 80px", maxWidth:680, margin:"0 auto" }}>
         <div style={{ display:"flex", gap:8, marginBottom:16 }}>
           <span style={{ padding:"4px 12px", borderRadius:100, fontSize:11, fontWeight:800, background:`${gc}22`, color:gc, border:`1px solid ${gc}` }}>Grade {q.grade}</span>
           <span style={{ fontSize:12, color:C.textMuted, padding:"4px 0" }}>{q.marks} marks</span>
         </div>
         <div style={{ fontSize:18, fontWeight:600, color:C.text, marginBottom:20, lineHeight:1.5 }}>{q.question}</div>
-
         {!submitted[q.id] ? (
           <>
             <textarea value={answers[q.id]||""} onChange={e => setAnswers(p => ({...p, [q.id]: e.target.value}))}
               placeholder="Write your answer…" rows={5}
               style={{ width:"100%", padding:"14px 16px", background:C.surface, border:`1px solid ${C.border}`, borderRadius:14, color:C.text, fontSize:15, lineHeight:1.6, resize:"vertical", outline:"none", boxSizing:"border-box" }} />
-            <Btn onClick={() => setSubmitted(p => ({...p, [q.id]: true}))} disabled={!answers[q.id]?.trim()}
-              style={{ width:"100%", padding:"14px", marginTop:12 }}>Reveal answer →</Btn>
+            <Btn onClick={() => setSubmitted(p => ({...p, [q.id]: true}))} disabled={!answers[q.id]?.trim()} style={{ width:"100%", padding:"14px", marginTop:12 }}>Reveal answer →</Btn>
           </>
         ) : (
           <div>
-            {q.mark_scheme && (
-              <div style={{ padding:"14px 16px", borderRadius:12, background:"rgba(34,211,160,0.08)", border:`1px solid rgba(34,211,160,0.2)`, marginBottom:10 }}>
-                <div style={{ fontSize:11, fontWeight:800, color:C.green, marginBottom:6, textTransform:"uppercase" }}>Mark Scheme</div>
-                <div style={{ fontSize:14, color:C.text, lineHeight:1.6, whiteSpace:"pre-wrap" }}>{q.mark_scheme}</div>
-              </div>
-            )}
-            {q.model_answer && (
-              <div style={{ padding:"14px 16px", borderRadius:12, background:"rgba(99,102,241,0.08)", border:`1px solid var(--accent-glow)`, marginBottom:10 }}>
-                <div style={{ fontSize:11, fontWeight:800, color:C.accent, marginBottom:6, textTransform:"uppercase" }}>Model Answer</div>
-                <div style={{ fontSize:14, color:C.text, lineHeight:1.6, whiteSpace:"pre-wrap" }}>{q.model_answer}</div>
-              </div>
-            )}
+            {q.mark_scheme && <div style={{ padding:"14px 16px", borderRadius:12, background:"rgba(34,211,160,0.08)", border:`1px solid rgba(34,211,160,0.2)`, marginBottom:10 }}>
+              <div style={{ fontSize:11, fontWeight:800, color:C.green, marginBottom:6, textTransform:"uppercase" }}>Mark Scheme</div>
+              <div style={{ fontSize:14, color:C.text, lineHeight:1.6, whiteSpace:"pre-wrap" }}>{q.mark_scheme}</div>
+            </div>}
+            {q.model_answer && <div style={{ padding:"14px 16px", borderRadius:12, background:"rgba(99,102,241,0.08)", border:`1px solid var(--accent-glow)`, marginBottom:10 }}>
+              <div style={{ fontSize:11, fontWeight:800, color:C.accent, marginBottom:6, textTransform:"uppercase" }}>Model Answer</div>
+              <div style={{ fontSize:14, color:C.text, lineHeight:1.6, whiteSpace:"pre-wrap" }}>{q.model_answer}</div>
+            </div>}
             <div style={{ display:"flex", gap:10 }}>
               <Btn variant="ghost" onClick={() => { setSubmitted(p => ({...p, [q.id]: false})); setAnswers(p => ({...p, [q.id]: ""})); }} style={{ flex:1, padding:"12px" }}>Try again</Btn>
-              {idx < questions.length - 1 ? (
-                <Btn onClick={() => setIdx(i => i + 1)} style={{ flex:2, padding:"12px" }}>Next question →</Btn>
-              ) : (
-                <Btn onClick={() => { onComplete(); onExit(); }} style={{ flex:2, padding:"12px" }}>Finish quiz ✓</Btn>
-              )}
+              {idx < questions.length - 1
+                ? <Btn onClick={() => setIdx(i => i + 1)} style={{ flex:2, padding:"12px" }}>Next question →</Btn>
+                : <Btn onClick={() => { onComplete(); onExit(); }} style={{ flex:2, padding:"12px" }}>Finish quiz ✓</Btn>
+              }
             </div>
           </div>
         )}
@@ -446,7 +444,7 @@ function QuizMode({ lesson, onBack, onExit, onComplete }) {
   );
 }
 
-// ═══ BLURT MODE ══════════════════════════════════════════════════════════════
+// ═══ BLURT MODE ═══════════════════════════════════════════════════════════════
 function BlurtMode({ lesson, onBack, onExit, onComplete }) {
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
@@ -475,14 +473,11 @@ function BlurtMode({ lesson, onBack, onExit, onComplete }) {
           <div style={{ fontSize:11, color:C.textMuted }}>{lesson.title}</div>
         </div>
       </div>
-
       <div style={{ padding:"24px 16px 80px", maxWidth:680, margin:"0 auto" }}>
         {!result ? (
           <>
             <h2 style={{ fontSize:22, fontWeight:800, color:C.text, marginBottom:8, fontFamily:"var(--font-serif)" }}>Write everything you know</h2>
-            <p style={{ fontSize:13, color:C.textSec, marginBottom:20, lineHeight:1.6 }}>
-              Close the lesson and write everything you can remember about this topic. The AI will check what you got right, what you missed, and what was wrong.
-            </p>
+            <p style={{ fontSize:13, color:C.textSec, marginBottom:20, lineHeight:1.6 }}>Close the lesson and write everything you can remember. The AI will check what you got right, what you missed, and what was wrong.</p>
             <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Start writing…" rows={14}
               style={{ width:"100%", padding:"16px", background:C.surface, border:`1px solid ${C.border}`, borderRadius:14, color:C.text, fontSize:15, lineHeight:1.7, resize:"vertical", outline:"none", boxSizing:"border-box", fontFamily:"inherit" }} />
             <Btn onClick={submit} disabled={!text.trim() || submitting} style={{ width:"100%", padding:"14px", marginTop:12 }}>
@@ -490,14 +485,14 @@ function BlurtMode({ lesson, onBack, onExit, onComplete }) {
             </Btn>
           </>
         ) : (
-          <BlurtResult result={result} lessonTitle={lesson.title} onRetry={() => { setResult(null); setText(""); }} onFinish={() => { onComplete(); onExit(); }} />
+          <BlurtResult result={result} onRetry={() => { setResult(null); setText(""); }} onFinish={() => { onComplete(); onExit(); }} />
         )}
       </div>
     </div>
   );
 }
 
-function BlurtResult({ result, lessonTitle, onRetry, onFinish }) {
+function BlurtResult({ result, onRetry, onFinish }) {
   const score = result.score || 0;
   const color = score >= 80 ? C.green : score >= 50 ? C.amber : C.red;
   return (
@@ -506,23 +501,13 @@ function BlurtResult({ result, lessonTitle, onRetry, onFinish }) {
         <div style={{ fontSize:56, fontWeight:900, color, lineHeight:1 }}>{score}</div>
         <div style={{ fontSize:12, color:C.textMuted, letterSpacing:"0.1em", textTransform:"uppercase", marginTop:4 }}>out of 100</div>
       </div>
-
-      {result.wellRecalled?.length > 0 && (
-        <Section title="✓ Well recalled" color={C.green}>{result.wellRecalled.map((p, i) => <li key={i} style={{ fontSize:14, color:C.text, marginBottom:6 }}>{p}</li>)}</Section>
-      )}
-      {result.missingKeyPoints?.length > 0 && (
-        <Section title="✗ Missing" color={C.red}>{result.missingKeyPoints.map((p, i) => <li key={i} style={{ fontSize:14, color:C.text, marginBottom:6 }}>{p}</li>)}</Section>
-      )}
-      {result.incorrectIdeas?.length > 0 && (
-        <Section title="⚠ Incorrect" color={C.amber}>{result.incorrectIdeas.map((p, i) => <li key={i} style={{ fontSize:14, color:C.text, marginBottom:6 }}>{p}</li>)}</Section>
-      )}
-      {result.knowledgeGapReport && (
-        <div style={{ padding:"16px 18px", borderRadius:14, background:"var(--surface-high)", border:`1px solid ${C.border}`, marginBottom:16 }}>
-          <div style={{ fontSize:11, fontWeight:800, color:C.accent, marginBottom:8, textTransform:"uppercase" }}>Summary</div>
-          <div style={{ fontSize:14, color:C.text, lineHeight:1.6 }}>{result.knowledgeGapReport}</div>
-        </div>
-      )}
-
+      {result.wellRecalled?.length > 0 && <Section title="✓ Well recalled" color={C.green}>{result.wellRecalled.map((p, i) => <li key={i} style={{ fontSize:14, color:C.text, marginBottom:6 }}>{p}</li>)}</Section>}
+      {result.missingKeyPoints?.length > 0 && <Section title="✗ Missing" color={C.red}>{result.missingKeyPoints.map((p, i) => <li key={i} style={{ fontSize:14, color:C.text, marginBottom:6 }}>{p}</li>)}</Section>}
+      {result.incorrectIdeas?.length > 0 && <Section title="⚠ Incorrect" color={C.amber}>{result.incorrectIdeas.map((p, i) => <li key={i} style={{ fontSize:14, color:C.text, marginBottom:6 }}>{p}</li>)}</Section>}
+      {result.knowledgeGapReport && <div style={{ padding:"16px 18px", borderRadius:14, background:"var(--surface-high)", border:`1px solid ${C.border}`, marginBottom:16 }}>
+        <div style={{ fontSize:11, fontWeight:800, color:C.accent, marginBottom:8, textTransform:"uppercase" }}>Summary</div>
+        <div style={{ fontSize:14, color:C.text, lineHeight:1.6 }}>{result.knowledgeGapReport}</div>
+      </div>}
       <div style={{ display:"flex", gap:10, marginTop:20 }}>
         <Btn variant="ghost" onClick={onRetry} style={{ flex:1, padding:"12px" }}>Try again</Btn>
         <Btn onClick={onFinish} style={{ flex:2, padding:"12px" }}>Done ✓</Btn>
@@ -540,13 +525,10 @@ function Section({ title, color, children }) {
   );
 }
 
-// ═══ MIND MAP MODE ═══════════════════════════════════════════════════════════
+// ═══ MIND MAP MODE ════════════════════════════════════════════════════════════
 function MindMapMode({ lesson, onBack, onExit, onComplete }) {
-  const [nodes, setNodes] = useState([
-    { id: 'root', text: lesson.title, x: 50, y: 50, isRoot: true }
-  ]);
+  const [nodes, setNodes] = useState([{ id:'root', text:lesson.title, isRoot:true }]);
   const [connections, setConnections] = useState([]);
-  const [selectedNode, setSelectedNode] = useState(null);
   const [newNodeText, setNewNodeText] = useState("");
   const [showAdd, setShowAdd] = useState(null);
   const [result, setResult] = useState(null);
@@ -555,14 +537,7 @@ function MindMapMode({ lesson, onBack, onExit, onComplete }) {
   const addChild = (parentId) => {
     if (!newNodeText.trim()) return;
     const id = Date.now().toString();
-    const parent = nodes.find(n => n.id === parentId);
-    const siblingsCount = connections.filter(c => c.from === parentId).length;
-    const newNode = {
-      id, text: newNodeText.trim(),
-      x: parent.x + (siblingsCount % 2 === 0 ? 180 : -180),
-      y: parent.y + 100 + (siblingsCount * 60),
-    };
-    setNodes(p => [...p, newNode]);
+    setNodes(p => [...p, { id, text: newNodeText.trim() }]);
     setConnections(p => [...p, { from: parentId, to: id }]);
     setNewNodeText("");
     setShowAdd(null);
@@ -585,7 +560,6 @@ function MindMapMode({ lesson, onBack, onExit, onComplete }) {
       }
       return n.text;
     }).join('\n');
-
     try {
       const token = localStorage.getItem('ep_token');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://edupositive-backend.onrender.com'}/api/ai/mindmap-grade`, {
@@ -629,45 +603,34 @@ function MindMapMode({ lesson, onBack, onExit, onComplete }) {
         <button onClick={onExit} style={{ background:"none", border:"none", color:C.textSec, fontSize:22, cursor:"pointer", lineHeight:1, padding:4 }}>×</button>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:14, fontWeight:700, color:C.text }}>🗺️ Mind Map</div>
-          <div style={{ fontSize:11, color:C.textMuted }}>Tap a node to add branches</div>
+          <div style={{ fontSize:11, color:C.textMuted }}>Tap + on any node to add branches</div>
         </div>
         <Btn onClick={submit} disabled={nodes.length < 3 || submitting} style={{ padding:"8px 16px", fontSize:13 }}>
           {submitting ? "Grading…" : "Grade ✓"}
         </Btn>
       </div>
-
       <div style={{ padding:"20px 16px", maxWidth:720, margin:"0 auto" }}>
-        <div style={{ fontSize:12, color:C.textSec, marginBottom:16, textAlign:"center" }}>Build a mind map showing what you know. Tap the + on any node to add a branch.</div>
-
+        <div style={{ fontSize:12, color:C.textSec, marginBottom:16, textAlign:"center" }}>Build a mind map showing what you know.</div>
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-          {nodes.map(n => {
-            const children = connections.filter(c => c.from === n.id).map(c => nodes.find(nn => nn.id === c.to)).filter(Boolean);
-            return (
-              <div key={n.id} style={{
-                padding:"14px 16px", borderRadius:14,
-                background: n.isRoot ? "var(--accent-soft)" : C.surface,
-                border:`1px solid ${n.isRoot ? C.accent : C.border}`,
-                marginLeft: n.isRoot ? 0 : 24,
-              }}>
-                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                  <div style={{ flex:1, fontSize:15, fontWeight:n.isRoot ? 800 : 600, color:C.text }}>{n.text}</div>
-                  <button onClick={() => setShowAdd(n.id)} style={{ padding:"4px 10px", borderRadius:8, background:C.accent, color:"#fff", border:"none", fontSize:12, cursor:"pointer" }}>+ branch</button>
-                  {!n.isRoot && <button onClick={() => removeNode(n.id)} style={{ padding:"4px 8px", borderRadius:8, background:"transparent", color:C.red, border:`1px solid ${C.red}33`, fontSize:12, cursor:"pointer" }}>×</button>}
-                </div>
-                {showAdd === n.id && (
-                  <div style={{ marginTop:10, display:"flex", gap:8 }}>
-                    <input autoFocus value={newNodeText} onChange={e => setNewNodeText(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && addChild(n.id)}
-                      placeholder="What's connected to this?"
-                      style={{ flex:1, padding:"10px 12px", background:"var(--surface-high)", border:`1px solid ${C.border}`, borderRadius:10, color:C.text, fontSize:14, outline:"none" }} />
-                    <Btn onClick={() => addChild(n.id)} style={{ padding:"10px 16px", fontSize:13 }}>Add</Btn>
-                  </div>
-                )}
+          {nodes.map(n => (
+            <div key={n.id} style={{ padding:"14px 16px", borderRadius:14, background: n.isRoot ? "var(--accent-soft)" : C.surface, border:`1px solid ${n.isRoot ? C.accent : C.border}`, marginLeft: n.isRoot ? 0 : 24 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <div style={{ flex:1, fontSize:15, fontWeight:n.isRoot ? 800 : 600, color:C.text }}>{n.text}</div>
+                <button onClick={() => setShowAdd(n.id)} style={{ padding:"4px 10px", borderRadius:8, background:C.accent, color:"#fff", border:"none", fontSize:12, cursor:"pointer" }}>+ branch</button>
+                {!n.isRoot && <button onClick={() => removeNode(n.id)} style={{ padding:"4px 8px", borderRadius:8, background:"transparent", color:C.red, border:`1px solid ${C.red}33`, fontSize:12, cursor:"pointer" }}>×</button>}
               </div>
-            );
-          })}
+              {showAdd === n.id && (
+                <div style={{ marginTop:10, display:"flex", gap:8 }}>
+                  <input autoFocus value={newNodeText} onChange={e => setNewNodeText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && addChild(n.id)}
+                    placeholder="What's connected to this?"
+                    style={{ flex:1, padding:"10px 12px", background:"var(--surface-high)", border:`1px solid ${C.border}`, borderRadius:10, color:C.text, fontSize:14, outline:"none" }} />
+                  <Btn onClick={() => addChild(n.id)} style={{ padding:"10px 16px", fontSize:13 }}>Add</Btn>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-
         {nodes.length === 1 && <p style={{ textAlign:"center", color:C.textMuted, marginTop:24, fontSize:13 }}>Add your first branch by tapping + above</p>}
       </div>
     </div>
