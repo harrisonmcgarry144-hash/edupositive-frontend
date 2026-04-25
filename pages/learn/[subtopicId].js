@@ -55,15 +55,42 @@ export default function SubtopicPage() {
   const [mode, setMode] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [pomodoroActive, setPomodoroActive] = useState(false);
   const [pomodoroMins, setPomodoroMins] = useState(25);
   const [pomodoroSecs, setPomodoroSecs] = useState(0);
   const pomodorRef = useRef(null);
+  const pollRef = useRef(null);
 
   useEffect(() => {
     if (!subtopicId) return;
-    contentApi.lessons(subtopicId).then(setLessons).catch(() => setFetchError(true)).finally(() => setLoading(false));
+    contentApi.lessons(subtopicId)
+      .then(data => {
+        setLessons(data);
+        if (data.length === 0) triggerGeneration(subtopicId);
+      })
+      .catch(() => setFetchError(true))
+      .finally(() => setLoading(false));
+    return () => clearInterval(pollRef.current);
   }, [subtopicId]);
+
+  async function triggerGeneration(id) {
+    setGenerating(true);
+    try {
+      await apiFetch(`/api/generate/subtopic/${id}`, { method: 'POST' });
+    } catch(e) {}
+    pollRef.current = setInterval(async () => {
+      try {
+        const data = await contentApi.lessons(id);
+        if (data.length > 0) {
+          setLessons(data);
+          setGenerating(false);
+          clearInterval(pollRef.current);
+        }
+      } catch(e) {}
+    }, 6000);
+    setTimeout(() => { clearInterval(pollRef.current); setGenerating(false); }, 180000);
+  }
 
   useEffect(() => {
     if (pomodoroActive) {
@@ -136,7 +163,14 @@ export default function SubtopicPage() {
       )}
 
       {fetchError && <p style={{ color:C.textSec, textAlign:"center", padding:40 }}>Couldn't load lessons. Please refresh and try again.</p>}
-      {!fetchError && lessons.length === 0 && <p style={{ color:C.textSec, textAlign:"center", padding:40 }}>Lessons are being generated — check back in a moment!</p>}
+      {!fetchError && lessons.length === 0 && (
+        <div style={{ textAlign:"center", padding:40 }}>
+          {generating && <Spinner size={24} style={{ margin:"0 auto 16px" }} />}
+          <p style={{ color:C.textSec }}>
+            {generating ? "Generating your lessons… this takes about a minute." : "Lessons are being generated — check back in a moment!"}
+          </p>
+        </div>
+      )}
 
       {lessons.map((l, i) => (
         <div key={l.id} onClick={() => openLesson(l.id)} style={{
