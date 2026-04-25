@@ -54,6 +54,7 @@ export default function SubtopicPage() {
   const [selected, setSelected] = useState(null);
   const [mode, setMode] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [pomodoroActive, setPomodoroActive] = useState(false);
   const [pomodoroMins, setPomodoroMins] = useState(25);
   const [pomodoroSecs, setPomodoroSecs] = useState(0);
@@ -61,7 +62,7 @@ export default function SubtopicPage() {
 
   useEffect(() => {
     if (!subtopicId) return;
-    contentApi.lessons(subtopicId).then(setLessons).catch(() => {}).finally(() => setLoading(false));
+    contentApi.lessons(subtopicId).then(setLessons).catch(() => setFetchError(true)).finally(() => setLoading(false));
   }, [subtopicId]);
 
   useEffect(() => {
@@ -134,7 +135,8 @@ export default function SubtopicPage() {
         <div style={{ fontSize:12, color:C.textMuted, marginBottom:24 }}>⏱ ~{lessons.length * 4} minutes to complete</div>
       )}
 
-      {lessons.length === 0 && <p style={{ color:C.textSec, textAlign:"center", padding:40 }}>Lessons are being generated — check back in a moment!</p>}
+      {fetchError && <p style={{ color:C.textSec, textAlign:"center", padding:40 }}>Couldn't load lessons. Please refresh and try again.</p>}
+      {!fetchError && lessons.length === 0 && <p style={{ color:C.textSec, textAlign:"center", padding:40 }}>Lessons are being generated — check back in a moment!</p>}
 
       {lessons.map((l, i) => (
         <div key={l.id} onClick={() => openLesson(l.id)} style={{
