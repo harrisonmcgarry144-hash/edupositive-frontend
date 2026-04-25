@@ -24,17 +24,18 @@ export default function Generating() {
       const statuses = await generateApi.userSubjectsStatus();
       setSubjects(statuses);
 
-      // Start generation for any not yet started
-     const allDoneAlready = statuses.every(s => s.status === 'complete');
-if (allDoneAlready) {
-  router.replace('/dashboard');
-  return;
-}
-for (const s of statuses) {
-  if (s.status !== 'complete') {
-    await generateApi.start(s.subjectId, s.board).catch(() => {});
-  }
-}
+      // statuses.every() returns true for an empty array (vacuous truth),
+      // so guard with .length > 0 to avoid redirecting before any generation starts.
+      const allDoneAlready = statuses.length > 0 && statuses.every(s => s.status === 'complete');
+      if (allDoneAlready) {
+        router.replace('/dashboard');
+        return;
+      }
+      for (const s of statuses) {
+        if (s.status !== 'complete') {
+          await generateApi.start(s.subjectId, s.board).catch(() => {});
+        }
+      }
 
       // Poll for progress
       pollRef.current = setInterval(async () => {
@@ -48,7 +49,7 @@ for (const s of statuses) {
         const current = updated.find(s => s.status === 'running');
         if (current) setCurrentSubject(current.name);
 
-        const allComplete = updated.every(s => s.status === 'complete');
+        const allComplete = updated.length > 0 && updated.every(s => s.status === 'complete');
         if (allComplete) {
           clearInterval(pollRef.current);
           setAllDone(true);
